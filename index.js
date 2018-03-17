@@ -51,35 +51,39 @@ class Airmega {
 
     purifierService
       .getCharacteristic(Characteristic.TargetAirPurifierState)
-      .on('get', this.getTargetAirPurifierState.bind(this));
+      .on('get', this.getTargetAirPurifierState.bind(this))
+      .on('set', this.setTargetAirPurifierState.bind(this));
 
     purifierService
       .getCharacteristic(Characteristic.RotationSpeed)
       .on('get', this.getRotationSpeed.bind(this))
       .on('set', this.setRotationSpeed.bind(this));
 
+    this.informationService = informationService;
+    this.purifierService = purifierService;
+
     return [informationService, purifierService];
   }
 
   getActiveCharacteristic(callback) {
     if (this.device == null) return;
+    if (!this.device.hasLatestData) return;
 
-    this.device.getLatestData().then((data) => {
-      if (data.power) {
-        this.log('Airmega is on');
-        callback(null, Characteristic.Active.ACTIVE);
-      } else {
-        this.log('Airmega is off');
-        callback(null, Characteristic.Active.INACTIVE);
-      }
-    }).catch((err) => {
-      this.log(err);
-      callback(err);
-    });
+    this.log('getActiveCharacteristic')
+
+    if (this.device.latestData.power) {
+      this.log('Airmega is on');
+      callback(null, Characteristic.Active.ACTIVE);
+    } else {
+      this.log('Airmega is off');
+      callback(null, Characteristic.Active.INACTIVE);
+    }
   }
 
   setActiveCharacteristic(targetState, callback) {
     if (this.device == null) return;
+
+    this.log('setActiveCharacteristic')
 
     this.device.togglePower(targetState).then(() => {
       if (targetState) {
@@ -98,62 +102,101 @@ class Airmega {
 
   getCurrentAirPurifierState(callback) {
     if (this.device == null) return;
+    if (!this.device.hasLatestData) return;
+
+    this.log('getCurrentAirPurifierState')    
+    
     let currentState;
+    let data = this.device.latestData;
 
-    this.device.getLatestData().then((data) => {
-      if (!data.power) {
-        currentState = Characteristic.CurrentAirPurifierState.INACTIVE;
-      }
+    currentState = Characteristic.CurrentAirPurifierState.PURIFYING_AIR;    
 
-      if (data.fanSpeed == 0 || data.mode == 2) {
-        currentState = Characteristic.CurrentAirPurifierState.IDLE;
-      }
+    if (!data.power) {
+      currentState = Characteristic.CurrentAirPurifierState.INACTIVE;
+    }
 
-      currentState = Characteristic.CurrentAirPurifierState.PURIFYING_AIR;
+    if (data.fanSpeed == 0 || data.mode == 2) {
+      currentState = Characteristic.CurrentAirPurifierState.IDLE;
+    }
 
-      this.log(`Current state is ${currentState}`);
-      callback(null, currentState);
-    }).catch((err) => {
-      this.log(err);
-      callback(err);
-    });
+    this.log(`Current state is ${currentState}`);
+    callback(null, currentState);
   }
 
   getTargetAirPurifierState(callback) {
     if (this.device == null) return;
+    if (!this.device.hasLatestData) return;
+
+    this.log('getTargetAirPurifierState')        
+    
     let targetState;
+    let data = this.device.latestData;  
 
-    this.device.getLatestData().then((data) => {
-      if (data.mode == 0) {
-        targetState = Characteristic.TargetAirPurifierState.MANUAL;
-      }
+    if (data.mode == 0) {
+      targetState = Characteristic.TargetAirPurifierState.MANUAL;
+    } else {
+      targetState = Characteristic.TargetAirPurifierState.AUTO;      
+    }
 
-      targetState = Characteristic.TargetAirPurifierState.AUTO;
+    this.log(`Target state is ${targetState}`);
+    callback(null, targetState);
+  }
 
-      this.log(`Target state is ${targetState}`);
-      callback(null, targetState);
+  setTargetAirPurifierState(targetState, callback) {
+    this.device.setFanSpeed(targetState ? -1 : 1).then(() => {
+      this.log(`Set target state to ${targetState}`);   
+      callback(null);
     }).catch((err) => {
       this.log(err);
       callback(err);
     });
   }
 
-  setTargetAirPurifierState(targetState, callback) {
-    this.log('setTargetAirPurifierState')
-    callback(null)
-    // no-op
-  }
-
   getRotationSpeed(callback) {
+    if (this.device == null) return;
+    if (!this.device.hasLatestData) return;
     this.log('getRotationSpeed')
-    // no-op
 
-    callback(null, 80);
+    let intervals = {
+      1: 20,
+      2: 50,
+      3: 100
+    }
+
+    let fanSpeed = intervals[this.device.latestData.fanSpeed];
+    
+    this.log(`Rotation speed is ${fanSpeed}`);
+    callback(null, fanSpeed);
   }
 
   setRotationSpeed(targetState, callback) {
-    this.log('setRotationSpeed')
-    // no-op
-    callback(null)
+    if (this.device == null) return;
+
+    let targetSpeed;
+    let intervals = {
+      1: [0, 40],
+      2: [40, 70],
+      3: [70, 100]
+    }
+
+    for (var key in intervals) {
+      var currentSpeed = intervals[key];
+
+      if (targetState > currentSpeed[0] && targetState <= currentSpeed[1]) {
+        targetSpeed = key;
+        break;
+      }
+    }
+
+    this.log(`Setting rotation speed to ${targetSpeed}`);
+
+    this.device.setFanSpeed(targetSpeed).then(() => {
+      self.purifierService.setCharacteristic(Characteristic.TargetAirPurifierState, Characteristic.TargetAirPurifierState.MANUAL);
+
+      callback(null);
+    }).catch((err) => {
+      this.log(err);
+      callback(err);
+    });
   }
 }

@@ -11,8 +11,10 @@ class Device {
 
     // this.latestData = {productId:"17202EUZ1741400012",fanSpeed:1,power:1,mood:2,powerOffResv:0,filter1ExchAlarm:0,filter2ExchAlarm:0,dustSensSet:2,dustPollutionLev:1,sleepModeEntry:0,cover1Open:0,cover2Open:0,mode:6};
     this.latestData = {};
+    this.hasLatestData = false;
 
     this.subscribeToWebsocket();
+    this.getLatestData();
   }
 
   subscribeToWebsocket() {
@@ -28,10 +30,10 @@ class Device {
   }
 
   getLatestData() {
-    return new Promise((resolve, reject) => {
+    // return new Promise((resolve, reject) => {
       if (this.useCachedData()) {
         this.log('using cached data');
-        resolve(this.latestData);
+        // resolve(this.latestData);
         return;
       } else {
         this.triggerLatestData();
@@ -42,15 +44,16 @@ class Device {
       this.ws.onmessage = ((message) => {
         let data = JSON.parse(message.data);
         if (!data.hasOwnProperty('body')) {
-          reject(new Error('No body found in response'));
+          // reject(new Error('No body found in response'));
         }
 
         this.latestData = data.body;
+        this.hasLatestData = true;
 
         this.log(`Got data: ${JSON.stringify(this.latestData)}`);
-        resolve(this.latestData);
+        // resolve(this.latestData);
       });
-    });
+    // });
   }
 
   useCachedData() {
@@ -103,6 +106,32 @@ class Device {
         resolve();
       }).catch((err) => {
         this.log(`Encountered an error when trying to toggle power: ${err}`);
+        reject(err);
+      });
+    });
+  }
+
+  setFanSpeed(fanSpeed) {
+    let options = {    
+      uri: `${constants.API_URI}/${constants.ENDPOINTS['fan']}`,
+      headers: {
+        'User-Agent': constants.USER_AGENT
+      },
+      method: 'POST',
+      json: true,
+      body: {
+        productId: this.deviceId,
+        userToken: this.userToken,
+        command: 'FAN_SPEED',
+        value: fanSpeed
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      request(options).promise().bind(this).then((response) => {
+        resolve();
+      }).catch((err) => {
+        this.log(`Encountered an error when trying to set fan speed: ${err}`);
         reject(err);
       });
     });
