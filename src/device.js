@@ -27,11 +27,17 @@ class Device {
   }
 
   getLatestData() {
+    this.log('getLatestData');
+
     return new Promise((resolve, reject) => {
       if (this.useCachedData()) {
         this.log('using cached data');
         resolve(this.latestData);
+      } else {
+        this.triggerLatestData();
       }
+
+      this.log('no cached data, waiting for message')
 
       this.ws.onmessage = ((message) => {
         let data = JSON.parse(message.data);
@@ -73,6 +79,32 @@ class Device {
     }).catch((err) => {
       this.log(`Encountered an error when trying to get user token: ${err}`);
       reject(err);
+    });
+  }
+
+  togglePower(on) {
+    let options = {    
+      uri: `${constants.API_URI}/${constants.ENDPOINTS['power']}`,
+      headers: {
+        'User-Agent': constants.USER_AGENT
+      },
+      method: 'POST',
+      json: true,
+      body: {
+        productId: this.deviceId,
+        userToken: this.userToken,
+        command: 'POWER',
+        value: on
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      request(options).promise().bind(this).then((response) => {
+        resolve();
+      }).catch((err) => {
+        this.log(`Encountered an error when trying to toggle power: ${err}`);
+        reject(err);
+      });
     });
   }
 }
