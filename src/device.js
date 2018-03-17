@@ -9,6 +9,7 @@ class Device {
     this.log = options.log;
     this.ws = new WebSocket(constants.WS_URI);
 
+    // this.latestData = {productId:"17202EUZ1741400012",fanSpeed:1,power:1,mood:2,powerOffResv:0,filter1ExchAlarm:0,filter2ExchAlarm:0,dustSensSet:2,dustPollutionLev:1,sleepModeEntry:0,cover1Open:0,cover2Open:0,mode:6};
     this.latestData = {};
 
     this.subscribeToWebsocket();
@@ -27,12 +28,11 @@ class Device {
   }
 
   getLatestData() {
-    this.log('getLatestData');
-
     return new Promise((resolve, reject) => {
       if (this.useCachedData()) {
         this.log('using cached data');
         resolve(this.latestData);
+        return;
       } else {
         this.triggerLatestData();
       }
