@@ -1,8 +1,8 @@
 var Service, Characteristic;
 
-const Device = require('./device');
-const Authenticator = require('./authenticator');
-const constants = require('./constants');
+const Device = require('./src/device');
+const Authenticator = require('./src/authenticator');
+const constants = require('./src/constants');
 
 module.exports = function (homebridge) {
   Service = homebridge.hap.Service;
@@ -51,6 +51,8 @@ class Airmega {
   getActiveCharacteristic(callback) {
     if (this.device == null) return;
 
+    this.log('getActiveCharacteristic');
+
     this.device.getLatestData().then((data) => {
       if (data.power) {
         this.log('Airmega is on');
@@ -66,17 +68,19 @@ class Airmega {
     });
   }
 
-  setActiveCharacteristic(callback) {
+  setActiveCharacteristic(targetState, callback) {
     if (this.device == null) return;
 
-    this.device.getLatestData().then((data) => {
-      if (data.power) {
-        this.log('Airmega is on');
-        callback(null, Characteristic.Active.ACTIVE);
+    this.log('setActiveCharacteristic')
+
+    this.device.togglePower(targetState).then(() => {
+      if (targetState) {
+        self.purifierService.setCharacteristic(Characteristic.CurrentAirPurifierState, Characteristic.CurrentAirPurifierState.PURIFYING_AIR);   
       } else {
-        this.log('Airmega is off');
-        callback(null, Characteristic.Active.INACTIVE);
+        self.purifierService.setCharacteristic(Characteristic.CurrentAirPurifierState, Characteristic.CurrentAirPurifierState.INACTIVE);
       }
+
+      this.log(`Set power to ${targetState}`);
     }).catch((err) => {
       this.log(err);
       callback(err);
