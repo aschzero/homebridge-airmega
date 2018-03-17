@@ -39,6 +39,7 @@ class Airmega {
       .setCharacteristic(Characteristic.SerialNumber, '123-456-789');
 
     let purifierService = new Service.AirPurifier(this.name);
+    let airQualityService = new Service.AirQualitySensor(this.name);
 
     purifierService
       .getCharacteristic(Characteristic.Active)
@@ -59,10 +60,14 @@ class Airmega {
       .on('get', this.getRotationSpeed.bind(this))
       .on('set', this.setRotationSpeed.bind(this));
 
+    airQualityService
+      .getCharacteristic(Characteristic.AirQuality)
+      .on('get', this.getAirQuality.bind(this));
+
     this.informationService = informationService;
     this.purifierService = purifierService;
 
-    return [informationService, purifierService];
+    return [informationService, purifierService, airQualityService];
   }
 
   getActiveCharacteristic(callback) {
@@ -198,5 +203,30 @@ class Airmega {
       this.log(err);
       callback(err);
     });
+  }
+
+  getAirQuality(callback) {
+    if (this.device == null) return;
+    if (!this.device.hasLatestData) return;
+
+    let qualityLevel = this.device.latestData.dustPollutionLev;
+    let result;
+
+    switch (qualityLevel) {
+      case 1:
+        result = Characteristic.AirQuality.EXCELLENT;
+        break;
+      case 2:
+        result = Characteristic.AirQuality.GOOD;
+        break;
+      case 3:
+        result = Characteristic.AirQuality.FAIR;
+        break;
+      case 4:
+        result = Characteristic.AirQuality.INFERIOR;
+        break;
+    }
+
+    callback(null, result);
   }
 }
