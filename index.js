@@ -72,7 +72,6 @@ class Airmega {
 
   getActiveCharacteristic(callback) {
     if (this.device == null) return;
-    // if (!this.device.hasLatestData) return;
 
     this.log('getActiveCharacteristic')
 
@@ -89,6 +88,11 @@ class Airmega {
     if (this.device == null) return;
 
     this.log('setActiveCharacteristic')
+
+    if (this.device.power == targetState) {
+      callback(null);
+      return;
+    }
 
     this.device.togglePower(targetState).then(() => {
       this.log(`Setting power to ${targetState}`);      
@@ -110,7 +114,6 @@ class Airmega {
 
   getCurrentAirPurifierState(callback) {
     if (this.device == null) return;
-    // if (!this.device.hasLatestData) return;
 
     this.log('getCurrentAirPurifierState')
 
@@ -133,7 +136,6 @@ class Airmega {
 
   getTargetAirPurifierState(callback) {
     if (this.device == null) return;
-    // if (!this.device.hasLatestData) return;
 
     this.log('getTargetAirPurifierState')
     
