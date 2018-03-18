@@ -9,9 +9,13 @@ class Device {
     this.log = options.log;
     this.ws = new WebSocket(constants.WS_URI);
 
-    // this.latestData = {productId:"17202EUZ1741400012",fanSpeed:1,power:1,mood:2,powerOffResv:0,filter1ExchAlarm:0,filter2ExchAlarm:0,dustSensSet:2,dustPollutionLev:1,sleepModeEntry:0,cover1Open:0,cover2Open:0,mode:6};
     this.latestData = {};
     this.hasLatestData = false;
+
+    this.power = null;
+    this.fanSpeed = null;
+    this.mode = null;
+    this.airQuality = null;
 
     this.subscribeToWebsocket();
     this.getLatestData();
@@ -30,10 +34,10 @@ class Device {
   }
 
   getLatestData() {
-    // return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       if (this.useCachedData()) {
         this.log('using cached data');
-        // resolve(this.latestData);
+        resolve(this.latestData);
         return;
       } else {
         this.triggerLatestData();
@@ -44,21 +48,26 @@ class Device {
       this.ws.onmessage = ((message) => {
         let data = JSON.parse(message.data);
         if (!data.hasOwnProperty('body')) {
-          // reject(new Error('No body found in response'));
+          reject(new Error('No body found in response'));
         }
 
         this.latestData = data.body;
         this.hasLatestData = true;
 
+        this.power = data.body.power;
+        this.fanSpeed = data.body.fanSpeed;
+        this.mode = data.body.mode;
+        this.airQuality = data.body.dustPollutionLev;
+
         this.log(`Got data: ${JSON.stringify(this.latestData)}`);
-        // resolve(this.latestData);
+        resolve(this.latestData);
       });
-    // });
+    });
   }
 
   useCachedData() {
     // be smarter here
-    return Object.keys(this.latestData).length > 0;
+    return (Object.keys(this.latestData).length > 0 && this.hasLatestData);
   }
 
   // As far as I can tell, this is just a dummy endpoint
@@ -81,7 +90,6 @@ class Device {
       this.log('Triggered a fetch to get latest data');
     }).catch((err) => {
       this.log(`Encountered an error when trying to get user token: ${err}`);
-      reject(err);
     });
   }
 

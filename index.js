@@ -72,11 +72,11 @@ class Airmega {
 
   getActiveCharacteristic(callback) {
     if (this.device == null) return;
-    if (!this.device.hasLatestData) return;
+    // if (!this.device.hasLatestData) return;
 
     this.log('getActiveCharacteristic')
 
-    if (this.device.latestData.power) {
+    if (this.device.power) {
       this.log('Airmega is on');
       callback(null, Characteristic.Active.ACTIVE);
     } else {
@@ -91,13 +91,16 @@ class Airmega {
     this.log('setActiveCharacteristic')
 
     this.device.togglePower(targetState).then(() => {
+      this.log(`Setting power to ${targetState}`);      
+
+      // Need to set the current purifier state characteristic here
+      // otherwise accessory hangs on 'Turning on...'/'Turning off...'
       if (targetState) {
         this.purifierService.setCharacteristic(Characteristic.CurrentAirPurifierState, Characteristic.CurrentAirPurifierState.PURIFYING_AIR);   
       } else {
         this.purifierService.setCharacteristic(Characteristic.CurrentAirPurifierState, Characteristic.CurrentAirPurifierState.INACTIVE);
       }
 
-      this.log(`Set power to ${targetState}`);
       callback(null);
     }).catch((err) => {
       this.log(err);
@@ -107,49 +110,57 @@ class Airmega {
 
   getCurrentAirPurifierState(callback) {
     if (this.device == null) return;
-    if (!this.device.hasLatestData) return;
+    // if (!this.device.hasLatestData) return;
 
-    this.log('getCurrentAirPurifierState')    
-    
-    let currentState;
-    let data = this.device.latestData;
+    this.log('getCurrentAirPurifierState')
 
-    currentState = Characteristic.CurrentAirPurifierState.PURIFYING_AIR;    
-
-    if (!data.power) {
-      currentState = Characteristic.CurrentAirPurifierState.INACTIVE;
+    if (!this.device.power) {
+      this.log('Current state is inactive');
+      callback(null, Characteristic.CurrentAirPurifierState.INACTIVE);
+      return;
     }
 
-    if (data.fanSpeed == 0 || data.mode == 2) {
-      currentState = Characteristic.CurrentAirPurifierState.IDLE;
+    if (this.device.fanSpeed == 0 || this.device.mode == 2 || this.device.mode == 6) {
+      this.log('Current state is idle');
+      callback(null, Characteristic.CurrentAirPurifierState.IDLE);
+      return;
     }
 
-    this.log(`Current state is ${currentState}`);
-    callback(null, currentState);
+    this.log('Current state is purifying');
+    callback(null, Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
+    return;
   }
 
   getTargetAirPurifierState(callback) {
     if (this.device == null) return;
-    if (!this.device.hasLatestData) return;
+    // if (!this.device.hasLatestData) return;
 
-    this.log('getTargetAirPurifierState')        
+    this.log('getTargetAirPurifierState')
     
-    let targetState;
-    let data = this.device.latestData;  
-
-    if (data.mode == 0) {
-      targetState = Characteristic.TargetAirPurifierState.MANUAL;
+    if (this.device.mode == 0) {
+      this.log('Purifier mode set to manual');
+      callback(null, Characteristic.TargetAirPurifierState.MANUAL);
     } else {
-      targetState = Characteristic.TargetAirPurifierState.AUTO;      
+      this.log('Purifier mode set to auto');
+      callback(null, Characteristic.TargetAirPurifierState.AUTO);     
     }
-
-    this.log(`Target state is ${targetState}`);
-    callback(null, targetState);
   }
 
   setTargetAirPurifierState(targetState, callback) {
-    this.device.setFanSpeed(targetState ? -1 : 1).then(() => {
-      this.log(`Set target state to ${targetState}`);   
+    if (this.device == null) return;
+
+    this.log('setTargetAirPurifierState')
+
+    let targetMode;
+    if (targetState) {
+      this.log('Setting mode to auto');
+      targetMode = -1;
+    } else {
+      this.log('Setting mode to manual');
+      targetMode = 1;
+    }
+
+    this.device.setFanSpeed(targetMode).then(() => {
       callback(null);
     }).catch((err) => {
       this.log(err);
@@ -159,16 +170,15 @@ class Airmega {
 
   getRotationSpeed(callback) {
     if (this.device == null) return;
-    if (!this.device.hasLatestData) return;
-    this.log('getRotationSpeed')
-
     let intervals = {
       1: 20,
       2: 50,
       3: 100
     }
 
-    let fanSpeed = intervals[this.device.latestData.fanSpeed];
+    this.log('setRotationSpeed')
+
+    let fanSpeed = intervals[this.device.fanSpeed];
     
     this.log(`Rotation speed is ${fanSpeed}`);
     callback(null, fanSpeed);
@@ -176,6 +186,8 @@ class Airmega {
 
   setRotationSpeed(targetState, callback) {
     if (this.device == null) return;
+
+    this.log('setRotationSpeed')
 
     let targetSpeed;
     let intervals = {
@@ -196,8 +208,6 @@ class Airmega {
     this.log(`Setting rotation speed to ${targetSpeed}`);
 
     this.device.setFanSpeed(targetSpeed).then(() => {
-      self.purifierService.setCharacteristic(Characteristic.TargetAirPurifierState, Characteristic.TargetAirPurifierState.MANUAL);
-
       callback(null);
     }).catch((err) => {
       this.log(err);
@@ -207,12 +217,9 @@ class Airmega {
 
   getAirQuality(callback) {
     if (this.device == null) return;
-    if (!this.device.hasLatestData) return;
-
-    let qualityLevel = this.device.latestData.dustPollutionLev;
+    
     let result;
-
-    switch (qualityLevel) {
+    switch (this.device.airQuality) {
       case 1:
         result = Characteristic.AirQuality.EXCELLENT;
         break;
