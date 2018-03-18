@@ -9,9 +9,7 @@ class Device {
     this.log = options.log;
     this.ws = new WebSocket(constants.WS_URI);
 
-    this.latestData = {};
-    this.hasLatestData = false;
-
+    this.fetchedData = true;
     this.power = null;
     this.fanSpeed = null;
     this.mode = null;
@@ -34,40 +32,23 @@ class Device {
   }
 
   getLatestData() {
-    return new Promise((resolve, reject) => {
-      if (this.useCachedData()) {
-        this.log('using cached data');
-        resolve(this.latestData);
+    this.triggerLatestData();
+    
+    this.ws.onmessage = ((message) => {
+      let data = JSON.parse(message.data);
+      if (!data.hasOwnProperty('body')) {
+        this.log('No body found in response');
         return;
-      } else {
-        this.triggerLatestData();
       }
 
-      this.log('no cached data, waiting for message')
+      this.fetchedData = true;
+      this.power = data.body.power;
+      this.fanSpeed = data.body.fanSpeed;
+      this.mode = data.body.mode;
+      this.airQuality = data.body.dustPollutionLev;
 
-      this.ws.onmessage = ((message) => {
-        let data = JSON.parse(message.data);
-        if (!data.hasOwnProperty('body')) {
-          reject(new Error('No body found in response'));
-        }
-
-        this.latestData = data.body;
-        this.hasLatestData = true;
-
-        this.power = data.body.power;
-        this.fanSpeed = data.body.fanSpeed;
-        this.mode = data.body.mode;
-        this.airQuality = data.body.dustPollutionLev;
-
-        this.log(`Got data: ${JSON.stringify(this.latestData)}`);
-        resolve(this.latestData);
-      });
+      this.log(`Got data: ${JSON.stringify(data.body)}`);
     });
-  }
-
-  useCachedData() {
-    // be smarter here
-    return (Object.keys(this.latestData).length > 0 && this.hasLatestData);
   }
 
   // As far as I can tell, this is just a dummy endpoint
