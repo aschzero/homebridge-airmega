@@ -63,9 +63,17 @@ class Airmega {
       .getCharacteristic(Characteristic.FilterChangeIndication)
       .on('get', this.getPreFilterChangeIndication.bind(this));
 
+    preFilterService
+      .getCharacteristic(Characteristic.FilterLifeLevel)
+      .on('get', this.getPreFilterLifeLevel.bind(this));
+
     mainFilterService
       .getCharacteristic(Characteristic.FilterChangeIndication)
       .on('get', this.getMainFilterChangeIndication.bind(this));
+
+    mainFilterService
+      .getCharacteristic(Characteristic.FilterLifeLevel)
+      .on('get', this.getMainFilterLifeLevel.bind(this));
 
     this.purifierService = purifierService;
 
@@ -237,6 +245,17 @@ class Airmega {
     }
   }
 
+  getPreFilterLifeLevel(callback) {
+    if (this.device == null) return;
+    
+    this.device.getFilterLifeLevels().then((data) => {
+      callback(null, data.prefilter);
+    }).catch((err) => {
+      this.log(err);
+      callback(err);
+    });
+  }
+
   getMainFilterChangeIndication(callback) {
     if (this.device == null) return;
     
@@ -245,6 +264,17 @@ class Airmega {
     } else {
       callback(null, Characteristic.FilterChangeIndication.FILTER_OK);
     }
+  }
+
+  getMainFilterLifeLevel(callback) {
+    if (this.device == null) return;
+    
+    this.device.getFilterLifeLevels().then((data) => {
+      callback(null, data.hepafilter);
+    }).catch((err) => {
+      this.log(err);
+      callback(err);
+    });
   }
 }
 

@@ -14,6 +14,7 @@ class Purifier {
     this.fanSpeed = null;
     this.mode = null;
     this.airQuality = null;
+    
     this.preFilterAlarm = null;
     this.mainFilterAlarm = null;
 
@@ -125,6 +126,30 @@ class Purifier {
         resolve();
       }).catch((err) => {
         this.log(`Encountered an error when trying to set fan speed: ${err}`);
+        reject(err);
+      });
+    });
+  }
+
+  getFilterLifeLevels() {
+    let options = {    
+      uri: `${constants.API_URI}/${constants.ENDPOINTS['filter']}`,
+      headers: {
+        'User-Agent': constants.USER_AGENT
+      },
+      method: 'POST',
+      json: true,
+      body: {
+        productId: this.deviceId,
+        userToken: this.userToken
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      request(options).promise().bind(this).then((response) => {
+        resolve(response.body);
+      }).catch((err) => {
+        this.log(`Encountered an error when getting filter status: ${err}`);
         reject(err);
       });
     });
