@@ -3,7 +3,7 @@ const constants = require('./constants');
 
 class Authenticator {
   constructor(options) {
-    this.name = 'Entrance';
+    this.deviceName = options.deviceName;
     this.email = options.email;
     this.password = options.password;
     this.log = options.log;
@@ -39,7 +39,7 @@ class Authenticator {
           this.log(`Found user token: ${this.userToken}`);
 
           response.body.purifiers.forEach((purifier => {
-            if (purifier.aliasName == this.name) {
+            if (purifier.aliasName == this.deviceName) {
               this.deviceId = purifier.productId;
               this.log(`Found device with ID ${this.deviceId}`);
 

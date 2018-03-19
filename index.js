@@ -10,6 +10,7 @@ class Airmega {
     this.log = log;
   
     var authenticator = new Authenticator({
+      deviceName: config['device_name'],
       email: config['email'],
       password: config['password'],
       log: this.log
