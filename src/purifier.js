@@ -74,7 +74,7 @@ class Purifier {
     });
   }
 
-  togglePower(on) {
+  setPower(on) {
     let options = {    
       uri: `${constants.API_URI}/${constants.ENDPOINTS['power']}`,
       headers: {

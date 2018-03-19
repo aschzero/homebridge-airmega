@@ -83,7 +83,7 @@ class Airmega {
       return;
     }
 
-    this.device.togglePower(targetState).then(() => {
+    this.device.setPower(targetState).then(() => {
       this.log(`Setting power to ${targetState}`);      
 
       // Need to set the current purifier state characteristic here
