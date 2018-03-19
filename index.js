@@ -66,8 +66,6 @@ class Airmega {
   getActiveCharacteristic(callback) {
     if (this.device == null) return;
 
-    this.log('getActiveCharacteristic')
-
     if (this.device.power) {
       this.log('Airmega is on');
       callback(null, Characteristic.Active.ACTIVE);
@@ -79,8 +77,6 @@ class Airmega {
 
   setActiveCharacteristic(targetState, callback) {
     if (this.device == null) return;
-
-    this.log('setActiveCharacteristic')
 
     if (this.device.power == targetState) {
       callback(null);
@@ -108,8 +104,6 @@ class Airmega {
   getCurrentAirPurifierState(callback) {
     if (this.device == null) return;
 
-    this.log('getCurrentAirPurifierState')
-
     if (!this.device.power) {
       this.log('Current state is inactive');
       callback(null, Characteristic.CurrentAirPurifierState.INACTIVE);
@@ -124,27 +118,22 @@ class Airmega {
 
     this.log('Current state is purifying');
     callback(null, Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
-    return;
   }
 
   getTargetAirPurifierState(callback) {
     if (this.device == null) return;
 
-    this.log('getTargetAirPurifierState')
-    
     if (this.device.mode == 0) {
-      this.log('Purifier mode set to manual');
+      this.log('Target purifier state is manual');
       callback(null, Characteristic.TargetAirPurifierState.MANUAL);
     } else {
-      this.log('Purifier mode set to auto');
+      this.log('Target purifier state is auto');
       callback(null, Characteristic.TargetAirPurifierState.AUTO);     
     }
   }
 
   setTargetAirPurifierState(targetState, callback) {
     if (this.device == null) return;
-
-    this.log('setTargetAirPurifierState')
 
     let targetMode;
     if (targetState) {
@@ -165,14 +154,8 @@ class Airmega {
 
   getRotationSpeed(callback) {
     if (this.device == null) return;
-    let intervals = {
-      1: 20,
-      2: 50,
-      3: 100
-    }
-
-    this.log('getRotationSpeed')
-
+    
+    let intervals = {1: 20, 2: 50, 3: 100};
     let fanSpeed = intervals[this.device.fanSpeed];
     
     this.log(`Rotation speed is ${fanSpeed}`);
@@ -182,17 +165,11 @@ class Airmega {
   setRotationSpeed(targetState, callback) {
     if (this.device == null) return;
 
-    this.log('setRotationSpeed')
-
     let targetSpeed;
-    let intervals = {
-      1: [0, 40],
-      2: [40, 70],
-      3: [70, 100]
-    }
+    let ranges = {1: [0, 40], 2: [40, 70], 3: [70, 100]};
 
-    for (var key in intervals) {
-      var currentSpeed = intervals[key];
+    for (var key in ranges) {
+      var currentSpeed = ranges[key];
 
       if (targetState > currentSpeed[0] && targetState <= currentSpeed[1]) {
         targetSpeed = key;
