@@ -14,6 +14,8 @@ class Purifier {
     this.fanSpeed = null;
     this.mode = null;
     this.airQuality = null;
+    this.preFilterAlarm = null;
+    this.mainFilterAlarm = null;
 
     this.subscribeToWebsocket();
     this.getLatestData();
@@ -46,6 +48,8 @@ class Purifier {
       this.fanSpeed = data.body.fanSpeed;
       this.mode = data.body.mode;
       this.airQuality = data.body.dustPollutionLev;
+      this.preFilterAlarm = data.body.filter1ExchAlarm;
+      this.mainFilterAlarm = data.body.filter2ExchAlarm;
 
       this.log(`Got data: ${JSON.stringify(data.body)}`);
     });

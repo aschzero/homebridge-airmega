@@ -26,13 +26,15 @@ class Airmega {
 
   getServices() {
     let informationService = new Service.AccessoryInformation();
+    let purifierService = new Service.AirPurifier(this.name);
+    let airQualityService = new Service.AirQualitySensor(this.name);
+    let preFilterService = new Service.FilterMaintenance('Pre Filter', 'pre');
+    let mainFilterService = new Service.FilterMaintenance('Max2 Filter', 'main'); 
+
     informationService
       .setCharacteristic(Characteristic.Manufacturer, 'Coway')
       .setCharacteristic(Characteristic.Model, 'Airmega')
       .setCharacteristic(Characteristic.SerialNumber, '123-456-789');
-
-    let purifierService = new Service.AirPurifier(this.name);
-    let airQualityService = new Service.AirQualitySensor(this.name);
 
     purifierService
       .getCharacteristic(Characteristic.Active)
@@ -57,20 +59,33 @@ class Airmega {
       .getCharacteristic(Characteristic.AirQuality)
       .on('get', this.getAirQuality.bind(this));
 
-    this.informationService = informationService;
+    preFilterService
+      .getCharacteristic(Characteristic.FilterChangeIndication)
+      .on('get', this.getPreFilterChangeIndication.bind(this));
+
+    mainFilterService
+      .getCharacteristic(Characteristic.FilterChangeIndication)
+      .on('get', this.getMainFilterChangeIndication.bind(this));
+
     this.purifierService = purifierService;
 
-    return [informationService, purifierService, airQualityService];
+    return [
+      informationService,
+      purifierService,
+      airQualityService,
+      preFilterService,
+      mainFilterService
+    ];
   }
 
   getActiveCharacteristic(callback) {
     if (this.device == null) return;
 
     if (this.device.power) {
-      this.log('Airmega is on');
+      this.log('Purifier is on');
       callback(null, Characteristic.Active.ACTIVE);
     } else {
-      this.log('Airmega is off');
+      this.log('Purifier is off');
       callback(null, Characteristic.Active.INACTIVE);
     }
   }
@@ -78,6 +93,9 @@ class Airmega {
   setActiveCharacteristic(targetState, callback) {
     if (this.device == null) return;
 
+    // Only toggle power when new state is different.
+    // Prevents extraneous calls especially when changing
+    // the fan speed (setRotationSpeed ensures device is on).
     if (this.device.power == targetState) {
       callback(null);
       return;
@@ -207,6 +225,26 @@ class Airmega {
     }
 
     callback(null, result);
+  }
+
+  getPreFilterChangeIndication(callback) {
+    if (this.device == null) return;
+
+    if (this.device.preFilterAlarm) {
+      callback(null, Characteristic.FilterChangeIndication.CHANGE_FILTER);
+    } else {
+      callback(null, Characteristic.FilterChangeIndication.FILTER_OK);
+    }
+  }
+
+  getMainFilterChangeIndication(callback) {
+    if (this.device == null) return;
+    
+    if (this.device.mainFilterAlarm) {
+      callback(null, Characteristic.FilterChangeIndication.CHANGE_FILTER);
+    } else {
+      callback(null, Characteristic.FilterChangeIndication.FILTER_OK);
+    }
   }
 }
 
