@@ -1,15 +1,8 @@
 var Service, Characteristic;
 
-const Device = require('./src/device');
+const Purifier = require('./src/purifier');
 const Authenticator = require('./src/authenticator');
 const constants = require('./src/constants');
-
-module.exports = function (homebridge) {
-  Service = homebridge.hap.Service;
-  Characteristic = homebridge.hap.Characteristic;
-
-  homebridge.registerAccessory('homebridge-airmega', 'Airmega', Airmega);
-};
 
 class Airmega {
   constructor(log, config) {
@@ -23,7 +16,7 @@ class Airmega {
     });
   
     authenticator.authenticate().then((data) => {
-      this.device = new Device({
+      this.device = new Purifier({
         userToken: data.userToken,
         deviceId: data.deviceId,
         log: this.log
@@ -178,7 +171,7 @@ class Airmega {
       3: 100
     }
 
-    this.log('setRotationSpeed')
+    this.log('getRotationSpeed')
 
     let fanSpeed = intervals[this.device.fanSpeed];
     
@@ -239,3 +232,10 @@ class Airmega {
     callback(null, result);
   }
 }
+
+module.exports = (homebridge) => {
+  Service = homebridge.hap.Service;
+  Characteristic = homebridge.hap.Characteristic;
+
+  homebridge.registerAccessory('homebridge-airmega', 'Airmega', Airmega);
+};

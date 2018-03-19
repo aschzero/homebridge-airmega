@@ -2,7 +2,7 @@ const request = require('request-promise');
 const WebSocket = require('ws');
 const constants = require('./constants');
 
-class Device {
+class Purifier {
   constructor(options) {
     this.deviceId = options.deviceId;
     this.userToken = options.userToken;
@@ -127,4 +127,4 @@ class Device {
   }
 }
 
-module.exports = Device;
+module.exports = Purifier;
