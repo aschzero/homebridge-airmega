@@ -131,6 +131,8 @@ class Airmega {
   getCurrentAirPurifierState(callback) {
     if (this.device == null) return;
 
+    this.device.getLatestData();
+
     if (!this.device.power) {
       this.log('Current state is inactive');
       callback(null, Characteristic.CurrentAirPurifierState.INACTIVE);
