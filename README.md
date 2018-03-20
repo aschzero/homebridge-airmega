@@ -42,6 +42,12 @@ Example homebridge configuration file:
 }
 ```
 
+### Required Fields
+* **accessory** - Set to "Airmega"
+* **name** - Name of the accessory that appears in HomeKit
+* **device_name** - Name you assigned to the purifier during the pairing process
+* **email/password** - Your login credentials
+
 ## Functionality
 
 * Turn on/off
