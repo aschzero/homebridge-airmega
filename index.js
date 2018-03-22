@@ -17,13 +17,13 @@ class Airmega {
     });
   
     authenticator.authenticate().then((data) => {
-      this.device = new Purifier({
+      this.purifier = new Purifier({
         userToken: data.userToken,
         deviceId: data.deviceId,
         log: this.log
       });
 
-      this.device.getLatestData();
+      this.purifier.getLatestData();
     });
   }
 
@@ -90,9 +90,9 @@ class Airmega {
   }
 
   getActiveCharacteristic(callback) {
-    if (this.device == null) return;
+    if (this.purifier == null) return;
 
-    if (this.device.power) {
+    if (this.purifier.power) {
       this.log('Purifier is on');
       callback(null, Characteristic.Active.ACTIVE);
     } else {
@@ -102,17 +102,17 @@ class Airmega {
   }
 
   setActiveCharacteristic(targetState, callback) {
-    if (this.device == null) return;
+    if (this.purifier == null) return;
 
     // Only toggle power when new state is different.
     // Prevents extraneous calls especially when changing
     // the fan speed (setRotationSpeed ensures device is on).
-    if (this.device.power == targetState) {
+    if (this.purifier.power == targetState) {
       callback(null);
       return;
     }
 
-    this.device.setPower(targetState).then(() => {
+    this.purifier.setPower(targetState).then(() => {
       this.log(`Setting power to ${targetState}`);      
 
       // Need to set the current purifier state characteristic here
@@ -131,17 +131,17 @@ class Airmega {
   }
 
   getCurrentAirPurifierState(callback) {
-    if (this.device == null) return;
+    if (this.purifier == null) return;
 
-    this.device.getLatestData();
+    this.purifier.getLatestData();
 
-    if (!this.device.power) {
+    if (!this.purifier.power) {
       this.log('Current state is inactive');
       callback(null, Characteristic.CurrentAirPurifierState.INACTIVE);
       return;
     }
 
-    if (this.device.fanSpeed == 0 || this.device.mode == 2 || this.device.mode == 6) {
+    if (this.purifier.fanSpeed == 0 || this.purifier.mode == 2 || this.purifier.mode == 6) {
       this.log('Current state is idle');
       callback(null, Characteristic.CurrentAirPurifierState.IDLE);
       return;
@@ -152,9 +152,9 @@ class Airmega {
   }
 
   getTargetAirPurifierState(callback) {
-    if (this.device == null) return;
+    if (this.purifier == null) return;
 
-    if (this.device.mode == 0) {
+    if (this.purifier.mode == 0) {
       this.log('Target purifier state is manual');
       callback(null, Characteristic.TargetAirPurifierState.MANUAL);
     } else {
@@ -164,7 +164,7 @@ class Airmega {
   }
 
   setTargetAirPurifierState(targetState, callback) {
-    if (this.device == null) return;
+    if (this.purifier == null) return;
 
     let targetMode;
     if (targetState) {
@@ -175,7 +175,7 @@ class Airmega {
       targetMode = 1;
     }
 
-    this.device.setFanSpeed(targetMode).then(() => {
+    this.purifier.setFanSpeed(targetMode).then(() => {
       callback(null);
     }).catch((err) => {
       this.log(err);
@@ -184,17 +184,17 @@ class Airmega {
   }
 
   getRotationSpeed(callback) {
-    if (this.device == null) return;
+    if (this.purifier == null) return;
     
     let intervals = {1: 20, 2: 50, 3: 100};
-    let fanSpeed = intervals[this.device.fanSpeed];
+    let fanSpeed = intervals[this.purifier.fanSpeed];
     
     this.log(`Rotation speed is ${fanSpeed}`);
     callback(null, fanSpeed);
   }
 
   setRotationSpeed(targetState, callback) {
-    if (this.device == null) return;
+    if (this.purifier == null) return;
 
     let targetSpeed;
     let ranges = {1: [0, 40], 2: [40, 70], 3: [70, 100]};
@@ -210,7 +210,7 @@ class Airmega {
 
     this.log(`Setting rotation speed to ${targetSpeed}`);
 
-    this.device.setFanSpeed(targetSpeed).then(() => {
+    this.purifier.setFanSpeed(targetSpeed).then(() => {
       callback(null);
     }).catch((err) => {
       this.log(err);
@@ -219,10 +219,10 @@ class Airmega {
   }
 
   getAirQuality(callback) {
-    if (this.device == null) return;
+    if (this.purifier == null) return;
     
     let result;
-    switch (this.device.airQuality) {
+    switch (this.purifier.airQuality) {
       case 1:
         result = Characteristic.AirQuality.EXCELLENT;
         break;
@@ -241,9 +241,9 @@ class Airmega {
   }
 
   getPreFilterChangeIndication(callback) {
-    if (this.device == null) return;
+    if (this.purifier == null) return;
 
-    if (this.device.preFilterAlarm) {
+    if (this.purifier.preFilterAlarm) {
       callback(null, Characteristic.FilterChangeIndication.CHANGE_FILTER);
     } else {
       callback(null, Characteristic.FilterChangeIndication.FILTER_OK);
@@ -251,9 +251,9 @@ class Airmega {
   }
 
   getPreFilterLifeLevel(callback) {
-    if (this.device == null) return;
+    if (this.purifier == null) return;
     
-    this.device.getFilterLifeLevels().then((data) => {
+    this.purifier.getFilterLifeLevels().then((data) => {
       callback(null, data.prefilter);
     }).catch((err) => {
       this.log(err);
@@ -262,9 +262,9 @@ class Airmega {
   }
 
   getMainFilterChangeIndication(callback) {
-    if (this.device == null) return;
+    if (this.purifier == null) return;
     
-    if (this.device.mainFilterAlarm) {
+    if (this.purifier.mainFilterAlarm) {
       callback(null, Characteristic.FilterChangeIndication.CHANGE_FILTER);
     } else {
       callback(null, Characteristic.FilterChangeIndication.FILTER_OK);
@@ -272,9 +272,9 @@ class Airmega {
   }
 
   getMainFilterLifeLevel(callback) {
-    if (this.device == null) return;
+    if (this.purifier == null) return;
     
-    this.device.getFilterLifeLevels().then((data) => {
+    this.purifier.getFilterLifeLevels().then((data) => {
       callback(null, data.hepafilter);
     }).catch((err) => {
       this.log(err);
