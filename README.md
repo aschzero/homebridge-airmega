@@ -2,9 +2,6 @@
 
 Control and monitor your Airmega purifier with HomeKit integration.
 
-![Screenshot of Home app](https://i.imgur.com/l6VHms4.jpg)
-![Screenshot of Elgato Eve app](https://i.imgur.com/kYXgx3u.png)
-
 ## Prerequisites
 
 * Working installation of [Homebridge](https://github.com/nfarina/homebridge)
