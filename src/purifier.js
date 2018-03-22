@@ -7,58 +7,58 @@ class Purifier {
     this.deviceId = options.deviceId;
     this.userToken = options.userToken;
     this.log = options.log;
-    this.ws = new WebSocket(constants.WS_URI);
 
-    this.fetchedData = true;
     this.power = null;
     this.fanSpeed = null;
     this.mode = null;
     this.airQuality = null;
-    
     this.preFilterAlarm = null;
     this.mainFilterAlarm = null;
 
     this.subscribeToWebsocket();
-    this.getLatestData();
   }
 
   subscribeToWebsocket() {
-    let ws = this.ws;
-    let subscribe = {
-      cmd: 'subscribe',
-      param: [{ productId: this.deviceId }]
-    }
-
-    this.ws.onopen = () => {
-      this.ws.send(JSON.stringify(subscribe));
-    }
-  }
-
-  getLatestData() {
-    this.triggerLatestData();
+    this.ws = new WebSocket(constants.WS_URI);
     
+    this.ws.onopen = () => {
+      this.ws.send(JSON.stringify({
+        cmd: 'subscribe',
+        param: [{ productId: this.deviceId }]
+      }));
+    }
+
     this.ws.onmessage = ((message) => {
       let data = JSON.parse(message.data);
-      if (!data.hasOwnProperty('body')) {
-        this.log('No body found in response');
+      if (!data.hasOwnProperty('body') || Object.keys(data.body).length == 0) {
+        this.log('No data found in response');
         return;
       }
 
-      this.fetchedData = true;
-      this.power = data.body.power;
-      this.fanSpeed = data.body.fanSpeed;
-      this.mode = data.body.mode;
-      this.airQuality = data.body.dustPollutionLev;
-      this.preFilterAlarm = data.body.filter1ExchAlarm;
-      this.mainFilterAlarm = data.body.filter2ExchAlarm;
+      this.log(`Got data: ${JSON.stringify(data)}`);      
 
-      this.log(`Got data: ${JSON.stringify(data.body)}`);
+      this.setLatestData(data.body);
     });
+
+    this.ws.onclose = () => {
+      this.log('Reconnecting...');
+
+      setTimeout(() => {
+        this.subscribeToWebsocket();
+      }, 5000);
+    }
   }
 
-  // As far as I can tell, this is just a dummy endpoint
-  // used for nothing more than to trigger a websocket message
-  triggerLatestData() {
+  setLatestData(data) {
+    this.power = data.power;
+    this.fanSpeed = data.fanSpeed;
+    this.mode = data.mode;
+    this.airQuality = data.dustPollutionLev;
+    this.preFilterAlarm = data.filter1ExchAlarm;
+    this.mainFilterAlarm = data.filter2ExchAlarm;
+  }
+
+  getLatestData() {
     let options = {    
       uri: `${constants.API_URI}/${constants.ENDPOINTS['trigger']}`,
       headers: {

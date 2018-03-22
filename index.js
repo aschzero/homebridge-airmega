@@ -22,6 +22,8 @@ class Airmega {
         deviceId: data.deviceId,
         log: this.log
       });
+
+      this.device.getLatestData();
     });
   }
 
