@@ -6,11 +6,13 @@ class Purifier {
   constructor(options) {
     this.deviceId = options.deviceId;
     this.userToken = options.userToken;
+    this.debug = options.debug || false;
     this.log = options.log;
 
     this.power = null;
     this.fanSpeed = null;
     this.mode = null;
+    this.mood = null;
     this.airQuality = null;
     this.preFilterAlarm = null;
     this.mainFilterAlarm = null;
@@ -31,17 +33,17 @@ class Purifier {
     this.ws.onmessage = ((message) => {
       let data = JSON.parse(message.data);
       if (!data.hasOwnProperty('body') || Object.keys(data.body).length == 0) {
-        this.log('No data found in response');
+        this.debugLog('No data found in response');
         return;
       }
 
-      this.log(`Got data: ${JSON.stringify(data)}`);      
+      this.debugLog(`Got data: ${JSON.stringify(data)}`);      
 
       this.setLatestData(data.body);
     });
 
     this.ws.onclose = () => {
-      this.log('Reconnecting...');
+      this.debugLog('Reconnecting...');
 
       setTimeout(() => {
         this.subscribeToWebsocket();
@@ -53,6 +55,7 @@ class Purifier {
     this.power = data.power;
     this.fanSpeed = data.fanSpeed;
     this.mode = data.mode;
+    this.mood = data.mood;
     this.airQuality = data.dustPollutionLev;
     this.preFilterAlarm = data.filter1ExchAlarm;
     this.mainFilterAlarm = data.filter2ExchAlarm;
@@ -73,7 +76,7 @@ class Purifier {
     }
 
     request(options).promise().bind(this).then((response) => {
-      this.log('Triggered a fetch to get latest data');
+      this.debugLog('Triggered a fetch to get latest data');
     }).catch((err) => {
       this.log(`Encountered an error when trying to get user token: ${err}`);
     });
@@ -153,6 +156,12 @@ class Purifier {
         reject(err);
       });
     });
+  }
+
+  debugLog(message) {
+    if (!this.debug) return;
+
+    this.log(message);
   }
 }
 

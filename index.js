@@ -20,6 +20,7 @@ class Airmega {
       this.purifier = new Purifier({
         userToken: data.userToken,
         deviceId: data.deviceId,
+        debug: config['debug'],
         log: this.log
       });
 

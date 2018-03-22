@@ -48,6 +48,9 @@ Example homebridge configuration file:
 * **device_name** - Name you assigned to the purifier during the pairing process
 * **email/password** - Your login credentials
 
+### Optional Fields
+* **debug** - Set to `true` to enable debug logging
+
 ## Functionality
 
 * Turn on/off
