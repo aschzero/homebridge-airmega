@@ -7,6 +7,7 @@ const constants = require('./src/constants');
 class Airmega {
   constructor(log, config) {
     this.name = config['name'];
+    this.includeLight = config['include_light'];
     this.log = log;
   
     var authenticator = new Authenticator({
@@ -32,6 +33,7 @@ class Airmega {
     let informationService = new Service.AccessoryInformation();
     let purifierService = new Service.AirPurifier(this.name);
     let airQualityService = new Service.AirQualitySensor(this.name);
+    let lightService = new Service.Lightbulb(this.name);    
     let preFilterService = new Service.FilterMaintenance('Pre Filter', 'pre');
     let mainFilterService = new Service.FilterMaintenance('Max2 Filter', 'main'); 
 
@@ -63,6 +65,11 @@ class Airmega {
       .getCharacteristic(Characteristic.AirQuality)
       .on('get', this.getAirQuality.bind(this));
 
+    lightService
+      .getCharacteristic(Characteristic.On)
+      .on('get', this.getLight.bind(this))
+      .on('set', this.setLight.bind(this));
+
     preFilterService
       .getCharacteristic(Characteristic.FilterChangeIndication)
       .on('get', this.getPreFilterChangeIndication.bind(this));
@@ -81,13 +88,19 @@ class Airmega {
 
     this.purifierService = purifierService;
 
-    return [
+    var services = [
       informationService,
       purifierService,
       airQualityService,
       preFilterService,
       mainFilterService
     ];
+
+    if (this.includeLight) {
+      services.push(lightService);
+    }
+
+    return services;
   }
 
   getActiveCharacteristic(callback) {
@@ -239,6 +252,25 @@ class Airmega {
     }
 
     callback(null, result);
+  }
+
+  getLight(callback) {
+    if (this.purifier == null) return;
+
+    callback(null, this.purifier.getLightOn());
+  }
+
+  setLight(targetState, callback) {
+    if (this.purifier == null) return;
+
+    this.log(`Turning light ${(targetState ? 'on' : 'off')}`);
+    
+    this.purifier.setLightOn(targetState).then(() => {
+      callback(null);
+    }).catch((err) => {
+      this.log(err);
+      callback(err);
+    });
   }
 
   getPreFilterChangeIndication(callback) {

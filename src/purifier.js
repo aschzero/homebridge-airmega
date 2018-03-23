@@ -84,7 +84,7 @@ class Purifier {
 
   setPower(on) {
     let options = {    
-      uri: `${constants.API_URI}/${constants.ENDPOINTS['power']}`,
+      uri: `${constants.API_URI}/${constants.ENDPOINTS['toggleAttribute']}`,
       headers: {
         'User-Agent': constants.USER_AGENT
       },
@@ -110,7 +110,7 @@ class Purifier {
 
   setFanSpeed(fanSpeed) {
     let options = {    
-      uri: `${constants.API_URI}/${constants.ENDPOINTS['fan']}`,
+      uri: `${constants.API_URI}/${constants.ENDPOINTS['toggleAttribute']}`,
       headers: {
         'User-Agent': constants.USER_AGENT
       },
@@ -129,6 +129,36 @@ class Purifier {
         resolve();
       }).catch((err) => {
         this.log(`Encountered an error when trying to set fan speed: ${err}`);
+        reject(err);
+      });
+    });
+  }
+
+  getLightOn() {
+    return this.mood == 2;
+  }
+
+  setLightOn(state) {
+    let options = {    
+      uri: `${constants.API_URI}/${constants.ENDPOINTS['toggleAttribute']}`,
+      headers: {
+        'User-Agent': constants.USER_AGENT
+      },
+      method: 'POST',
+      json: true,
+      body: {
+        productId: this.deviceId,
+        userToken: this.userToken,
+        command: 'MOOD',
+        value: (state ? 2 : 0)
+      }
+    }
+
+    return new Promise((resolve, reject) => {
+      request(options).promise().bind(this).then((response) => {
+        resolve();
+      }).catch((err) => {
+        this.log(`Encountered an error when trying to toggle light: ${err}`);
         reject(err);
       });
     });
