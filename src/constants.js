@@ -5,8 +5,7 @@ module.exports = Object({
   ENDPOINTS: {
     'login': 'CWU0110',
     'trigger': 'CWU0200',
-    'fan': 'CWU0300',
-    'power': 'CWU0300',
+    'toggleAttribute': 'CWU0300',
     'airquality': 'CWU0240',
     'filter': 'CWU0280'
   }
