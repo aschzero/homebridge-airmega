@@ -46,6 +46,7 @@ Example homebridge configuration file:
 * **email/password** - Your login credentials
 
 ### Optional Fields
+* **include_light** - Set to `true` to show light as an accessory
 * **debug** - Set to `true` to enable debug logging
 
 ## Functionality
