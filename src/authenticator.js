@@ -38,17 +38,10 @@ class Authenticator {
           this.userToken = response.body.userToken;
           this.log(`Found user token: ${this.userToken}`);
 
-          response.body.purifiers.forEach((purifier => {
-            if (purifier.aliasName == this.deviceName) {
-              this.deviceId = purifier.productId;
-              this.log(`Found device with ID ${this.deviceId}`);
-
-              resolve({
-                userToken: this.userToken,
-                deviceId: this.deviceId
-              });
-            }
-          }));
+          resolve({
+            userToken: this.userToken,
+            purifiers: response.body.purifiers
+          });
         })
         .catch(function(err) {
           this.log(`Encountered an error when trying to get user token: ${err}`);
