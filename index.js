@@ -1,106 +1,151 @@
-var Service, Characteristic;
+var Accessory, Service, Characteristic, UUIDGen;
 
+const http = require('http');
 const Purifier = require('./src/purifier');
 const Authenticator = require('./src/authenticator');
 const constants = require('./src/constants');
 
-class Airmega {
-  constructor(log, config) {
+class AirmegaPlatform {
+  constructor(log, config, api) {
     this.name = config['name'];
-    this.includeLight = config['include_light'];
     this.log = log;
-  
-    var authenticator = new Authenticator({
-      deviceName: config['device_name'],
-      email: config['email'],
-      password: config['password'],
-      log: this.log
-    });
-  
-    authenticator.authenticate().then((data) => {
-      this.purifier = new Purifier({
-        userToken: data.userToken,
-        deviceId: data.deviceId,
-        debug: config['debug'],
-        log: this.log
-      });
+    this.api = api;
+    this.accessories = [];
+    this.registeredAccessories = {};
 
-      this.purifier.getLatestData();
-    });
+    if (this.api) {
+      this.api.on('didFinishLaunching', () => {
+        var authenticator = new Authenticator({
+          email: config['email'],
+          password: config['password'],
+          log: this.log
+        });
+
+        authenticator.authenticate().then((data) => {
+          data.purifiers.forEach((purifier => {
+            this.addAccessory(purifier.aliasName, purifier.productId, data.userToken);
+          }))
+        });
+      });
+    }
   }
 
-  getServices() {
-    let informationService = new Service.AccessoryInformation();
-    let purifierService = new Service.AirPurifier(this.name);
-    let airQualityService = new Service.AirQualitySensor(this.name);
-    let lightService = new Service.Lightbulb(this.name);    
-    let preFilterService = new Service.FilterMaintenance('Pre Filter', 'pre');
-    let mainFilterService = new Service.FilterMaintenance('Max2 Filter', 'main'); 
+  configureAccessory(accessory) {
+    this.log(accessory.displayName, 'Purifier identified');
 
-    informationService
+    accessory.reachable = false;
+
+    this.registeredAccessories[accessory.UUID] = accessory;
+  }
+
+  addAccessory(accessoryName, deviceId, token) {
+    var uuid = UUIDGen.generate(accessoryName);
+    var accessory;
+
+    if (this.registeredAccessories[uuid]) {
+      this.log('getting cached accessory')
+      accessory = this.registeredAccessories[uuid];
+    } else {
+      this.log('creating new accessory')
+      accessory = new Accessory(accessoryName, uuid);
+    }
+
+    var airmegaAccessory = new AirmegaAccessory(this.log, {
+      name: accessoryName,
+      deviceId: deviceId,
+      userToken: token
+    }, accessory);
+
+    accessory.on('identify', (paired, callback) => {
+      this.log(accessory.displayName, 'Identified purifier');
+      callback();
+    });
+
+    this.accessories.push(accessory);
+
+    if (!this.registeredAccessories[uuid]) {
+      this.addServices(accessory, accessoryName);
+      this.api.registerPlatformAccessories('homebridge-airmega', 'Airmega', [accessory]);
+    }
+  }
+
+  addServices(accessory, accessoryName) {
+    accessory.addService(Service.AirPurifier, accessoryName);
+    accessory.addService(Service.AirQualitySensor, accessoryName);
+    accessory.addService(Service.Lightbulb, accessoryName);
+    accessory.addService(Service.FilterMaintenance, 'Pre-Filter', 'pre');
+    accessory.addService(Service.FilterMaintenance, 'Max2 Filter', 'max2');
+  }
+}
+
+class AirmegaAccessory {
+  constructor(log, config, accessory) {
+    this.log = log;
+    this.accessory = accessory;
+    this.name = config.name;
+
+    this.purifier = new Purifier({
+      deviceId: config.deviceId,
+      userToken: config.userToken,
+      log: this.log
+    });
+
+    this.log(`Created new purifier with deviceId ${this.purifier.deviceId} and userToken ${this.purifier.userToken}`);
+
+    this.setupServices();
+    this.accessory.updateReachability(true);
+    this.purifier.getLatestData();
+  }
+
+  setupServices() {
+    this.accessory.getService(Service.AccessoryInformation)
       .setCharacteristic(Characteristic.Manufacturer, 'Coway')
       .setCharacteristic(Characteristic.Model, 'Airmega')
       .setCharacteristic(Characteristic.SerialNumber, '123-456-789');
 
-    purifierService
-      .getCharacteristic(Characteristic.Active)
-      .on('get', this.getActiveCharacteristic.bind(this))
-      .on('set', this.setActiveCharacteristic.bind(this));
-
-    purifierService
-      .getCharacteristic(Characteristic.CurrentAirPurifierState)
-      .on('get', this.getCurrentAirPurifierState.bind(this));
-
-    purifierService
-      .getCharacteristic(Characteristic.TargetAirPurifierState)
-      .on('get', this.getTargetAirPurifierState.bind(this))
-      .on('set', this.setTargetAirPurifierState.bind(this));
-
-    purifierService
-      .getCharacteristic(Characteristic.RotationSpeed)
-      .on('get', this.getRotationSpeed.bind(this))
-      .on('set', this.setRotationSpeed.bind(this));
-
-    airQualityService
-      .getCharacteristic(Characteristic.AirQuality)
-      .on('get', this.getAirQuality.bind(this));
-
-    lightService
+    this.accessory.getService(Service.Lightbulb)
       .getCharacteristic(Characteristic.On)
       .on('get', this.getLight.bind(this))
       .on('set', this.setLight.bind(this));
 
-    preFilterService
+    this.accessory.getService(Service.AirQualitySensor)
+      .getCharacteristic(Characteristic.AirQuality)
+      .on('get', this.getAirQuality.bind(this));
+
+    this.accessory.getService(Service.AirPurifier)
+      .getCharacteristic(Characteristic.Active)
+      .on('get', this.getActiveCharacteristic.bind(this))
+      .on('set', this.setActiveCharacteristic.bind(this));
+
+    this.accessory.getService(Service.AirPurifier)
+      .getCharacteristic(Characteristic.CurrentAirPurifierState)
+      .on('get', this.getCurrentAirPurifierState.bind(this));
+
+    this.accessory.getService(Service.AirPurifier)
+      .getCharacteristic(Characteristic.TargetAirPurifierState)
+        .on('get', this.getTargetAirPurifierState.bind(this))
+        .on('set', this.setTargetAirPurifierState.bind(this));
+
+    this.accessory.getService(Service.AirPurifier)
+      .getCharacteristic(Characteristic.RotationSpeed)
+        .on('get', this.getRotationSpeed.bind(this))
+        .on('set', this.setRotationSpeed.bind(this));
+
+    this.accessory.getServiceByUUIDAndSubType(Service.FilterMaintenance, 'pre')
       .getCharacteristic(Characteristic.FilterChangeIndication)
       .on('get', this.getPreFilterChangeIndication.bind(this));
 
-    preFilterService
+    this.accessory.getServiceByUUIDAndSubType(Service.FilterMaintenance, 'pre')
       .getCharacteristic(Characteristic.FilterLifeLevel)
       .on('get', this.getPreFilterLifeLevel.bind(this));
 
-    mainFilterService
+    this.accessory.getServiceByUUIDAndSubType(Service.FilterMaintenance, 'max2')
       .getCharacteristic(Characteristic.FilterChangeIndication)
       .on('get', this.getMainFilterChangeIndication.bind(this));
 
-    mainFilterService
+    this.accessory.getServiceByUUIDAndSubType(Service.FilterMaintenance, 'max2')
       .getCharacteristic(Characteristic.FilterLifeLevel)
       .on('get', this.getMainFilterLifeLevel.bind(this));
-
-    this.purifierService = purifierService;
-
-    var services = [
-      informationService,
-      purifierService,
-      airQualityService,
-      preFilterService,
-      mainFilterService
-    ];
-
-    if (this.includeLight) {
-      services.push(lightService);
-    }
-
-    return services;
   }
 
   getActiveCharacteristic(callback) {
@@ -127,12 +172,12 @@ class Airmega {
     }
 
     this.purifier.setPower(targetState).then(() => {
-      this.log(`Setting power to ${targetState}`);      
+      this.log(`Setting power to ${targetState}`);
 
       // Need to set the current purifier state characteristic here
       // otherwise accessory hangs on 'Turning on...'/'Turning off...'
       if (targetState) {
-        this.purifierService.setCharacteristic(Characteristic.CurrentAirPurifierState, Characteristic.CurrentAirPurifierState.PURIFYING_AIR);   
+        this.purifierService.setCharacteristic(Characteristic.CurrentAirPurifierState, Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
       } else {
         this.purifierService.setCharacteristic(Characteristic.CurrentAirPurifierState, Characteristic.CurrentAirPurifierState.INACTIVE);
       }
@@ -173,7 +218,7 @@ class Airmega {
       callback(null, Characteristic.TargetAirPurifierState.MANUAL);
     } else {
       this.log('Target purifier state is auto');
-      callback(null, Characteristic.TargetAirPurifierState.AUTO);     
+      callback(null, Characteristic.TargetAirPurifierState.AUTO);
     }
   }
 
@@ -199,10 +244,10 @@ class Airmega {
 
   getRotationSpeed(callback) {
     if (this.purifier == null) return;
-    
+
     let intervals = {1: 20, 2: 50, 3: 100};
     let fanSpeed = intervals[this.purifier.fanSpeed];
-    
+
     this.log(`Rotation speed is ${fanSpeed}`);
     callback(null, fanSpeed);
   }
@@ -234,7 +279,7 @@ class Airmega {
 
   getAirQuality(callback) {
     if (this.purifier == null) return;
-    
+
     let result;
     switch (this.purifier.airQuality) {
       case 1:
@@ -261,10 +306,11 @@ class Airmega {
   }
 
   setLight(targetState, callback) {
+
     if (this.purifier == null) return;
 
     this.log(`Turning light ${(targetState ? 'on' : 'off')}`);
-    
+
     this.purifier.setLightOn(targetState).then(() => {
       callback(null);
     }).catch((err) => {
@@ -275,6 +321,7 @@ class Airmega {
 
   getPreFilterChangeIndication(callback) {
     if (this.purifier == null) return;
+      this.log(`preFilterAlarm ${this.purifier.mainFilterAlarm}`)
 
     if (this.purifier.preFilterAlarm) {
       callback(null, Characteristic.FilterChangeIndication.CHANGE_FILTER);
@@ -285,8 +332,9 @@ class Airmega {
 
   getPreFilterLifeLevel(callback) {
     if (this.purifier == null) return;
-    
+
     this.purifier.getFilterLifeLevels().then((data) => {
+      this.log(`got pre filter life levels: ${JSON.stringify(data)}`)
       callback(null, data.prefilter);
     }).catch((err) => {
       this.log(err);
@@ -296,7 +344,9 @@ class Airmega {
 
   getMainFilterChangeIndication(callback) {
     if (this.purifier == null) return;
-    
+
+      this.log(`mainFilterAlarm ${this.purifier.mainFilterAlarm}`)
+
     if (this.purifier.mainFilterAlarm) {
       callback(null, Characteristic.FilterChangeIndication.CHANGE_FILTER);
     } else {
@@ -306,8 +356,10 @@ class Airmega {
 
   getMainFilterLifeLevel(callback) {
     if (this.purifier == null) return;
-    
+
     this.purifier.getFilterLifeLevels().then((data) => {
+      this.log(`got main filter life levels: ${JSON.stringify(data)}`)
+
       callback(null, data.hepafilter);
     }).catch((err) => {
       this.log(err);
@@ -317,8 +369,11 @@ class Airmega {
 }
 
 module.exports = (homebridge) => {
+  Accessory = homebridge.platformAccessory;
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
+  UUIDGen = homebridge.hap.uuid;
 
-  homebridge.registerAccessory('homebridge-airmega', 'Airmega', Airmega);
+  homebridge.registerPlatform('homebridge-airmega', 'Airmega', AirmegaPlatform, true);
+  homebridge.registerAccessory('homebridge-airmega', 'Airmega', AirmegaAccessory);
 };
