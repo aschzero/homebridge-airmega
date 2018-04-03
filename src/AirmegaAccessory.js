@@ -15,17 +15,32 @@ class AirmegaAccessory {
 
     this.log(`Created new purifier with deviceId ${this.purifier.deviceId} and userToken ${this.purifier.userToken}`);
 
-    this.addServices();
+    this.addServicesIfNeeded();
     this.setupServices();
     this.purifier.getLatestData();
   }
 
-  addServices() {
-    this.accessory.addService(Service.AirPurifier, this.name);
-    this.accessory.addService(Service.AirQualitySensor, this.name);
-    this.accessory.addService(Service.Lightbulb, this.name);
-    this.accessory.addService(Service.FilterMaintenance, 'Pre-Filter', 'pre');
-    this.accessory.addService(Service.FilterMaintenance, 'Max2 Filter', 'max2');
+  // Ensure that services are only added when accessory is new and not cached
+  addServicesIfNeeded() {
+    this.purifierService =
+      this.accessory.getService(Service.AirPurifier) ||
+      this.accessory.addService(Service.AirPurifier, this.name);
+
+    this.airQualityService =
+      this.accessory.getService(Service.AirQualitySensor) ||
+      this.accessory.addService(Service.AirQualitySensor, this.name);
+
+    this.lightbulbService =
+      this.accessory.getService(Service.Lightbulb) ||
+      this.accessory.addService(Service.Lightbulb, this.name);
+
+    this.preFilterService =
+      this.accessory.getService(Service.FilterMaintenance) ||
+      this.accessory.addService(Service.FilterMaintenance, 'Pre-Filter', 'pre');
+
+    this.max2FilterService =
+      this.accessory.getService(Service.FilterMaintenance) ||
+      this.accessory.addService(Service.FilterMaintenance, 'Max2 Filter', 'max2');
   }
 
   setupServices() {
