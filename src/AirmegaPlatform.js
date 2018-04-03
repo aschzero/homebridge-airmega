@@ -1,4 +1,4 @@
-const Authenticator = require('./authenticator');
+const Authenticator = require('./Authenticator');
 var UUIDGen, Accessory, AirmegaAccessory;
 
 class AirmegaPlatform {

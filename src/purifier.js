@@ -22,7 +22,7 @@ class Purifier {
 
   subscribeToWebsocket() {
     this.ws = new WebSocket(constants.WS_URI);
-    
+
     this.ws.onopen = () => {
       this.ws.send(JSON.stringify({
         cmd: 'subscribe',
@@ -37,7 +37,7 @@ class Purifier {
         return;
       }
 
-      this.debugLog(`Got data: ${JSON.stringify(data)}`);      
+      this.debugLog(`Got data: ${JSON.stringify(data)}`);
 
       this.setLatestData(data.body);
     });
@@ -62,7 +62,7 @@ class Purifier {
   }
 
   getLatestData() {
-    let options = {    
+    let options = {
       uri: `${constants.API_URI}/${constants.ENDPOINTS['trigger']}`,
       headers: {
         'User-Agent': constants.USER_AGENT
@@ -83,7 +83,7 @@ class Purifier {
   }
 
   setPower(on) {
-    let options = {    
+    let options = {
       uri: `${constants.API_URI}/${constants.ENDPOINTS['toggleAttribute']}`,
       headers: {
         'User-Agent': constants.USER_AGENT
@@ -109,7 +109,7 @@ class Purifier {
   }
 
   setFanSpeed(fanSpeed) {
-    let options = {    
+    let options = {
       uri: `${constants.API_URI}/${constants.ENDPOINTS['toggleAttribute']}`,
       headers: {
         'User-Agent': constants.USER_AGENT
@@ -139,7 +139,7 @@ class Purifier {
   }
 
   setLightOn(state) {
-    let options = {    
+    let options = {
       uri: `${constants.API_URI}/${constants.ENDPOINTS['toggleAttribute']}`,
       headers: {
         'User-Agent': constants.USER_AGENT
@@ -165,7 +165,7 @@ class Purifier {
   }
 
   getFilterLifeLevels() {
-    let options = {    
+    let options = {
       uri: `${constants.API_URI}/${constants.ENDPOINTS['filter']}`,
       headers: {
         'User-Agent': constants.USER_AGENT
