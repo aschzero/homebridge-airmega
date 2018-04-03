@@ -1,4 +1,4 @@
-const Purifier = require('./purifier');
+const Purifier = require('./Purifier');
 var Accessory, Service, Characteristic;
 
 class AirmegaAccessory {

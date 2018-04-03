@@ -15,7 +15,7 @@ class Authenticator {
   authenticate(callback) {
     this.log('Logging in...');
 
-    let options = {    
+    let options = {
       uri: `${constants.API_URI}/${constants.ENDPOINTS['login']}`,
       headers: {
         'User-Agent': constants.USER_AGENT
@@ -30,7 +30,7 @@ class Authenticator {
 
     return new Promise((resolve, reject) => {
       request(options).promise().bind(this)
-        .then(function(response) {      
+        .then(function(response) {
           if (response.body === undefined) {
             throw new error('Unexpected response');
           }
