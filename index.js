@@ -6,8 +6,8 @@ module.exports = (homebridge) => {
   Characteristic = homebridge.hap.Characteristic;
   UUIDGen = homebridge.hap.uuid;
 
-  AirmegaAccessory = require('./src/AirmegaAccessory')(Accessory, Service, Characteristic);
-  AirmegaPlatform = require('./src/AirmegaPlatform')(UUIDGen, Accessory, AirmegaAccessory);
+  AirmegaAccessory = require('./lib/AirmegaAccessory')(Accessory, Service, Characteristic);
+  AirmegaPlatform = require('./lib/AirmegaPlatform')(UUIDGen, Accessory, AirmegaAccessory);
 
   homebridge.registerPlatform('homebridge-airmega', 'Airmega', AirmegaPlatform, true);
 };
