@@ -27,11 +27,10 @@ Example homebridge configuration file:
     "port": 51826,
     "pin": "031-45-156"
   },
-  "accessories": [
+  "platforms": [
     {
-      "accessory": "Airmega",
+      "platform": "Airmega",
       "name": "Air Purifier",
-      "device_name": "Bedroom",
       "email": "my@email.com",
       "password": "password123"
     }
@@ -39,15 +38,12 @@ Example homebridge configuration file:
 }
 ```
 
-### Required Fields
-* **accessory** - Set to "Airmega"
-* **name** - Name of the accessory that appears in HomeKit
-* **device_name** - Name you assigned to the purifier during the pairing process
-* **email/password** - Your login credentials
+The plugin will discover all connected purifiers when homebridge is restarted.
 
-### Optional Fields
-* **include_light** - Set to `true` to show light as an accessory
-* **debug** - Set to `true` to enable debug logging
+### Required Fields
+* **platform** - Set to "Airmega"
+* **name** - Name of the accessories that appears in HomeKit
+* **email/password** - Your login credentials
 
 ## Functionality
 
@@ -55,4 +51,18 @@ Example homebridge configuration file:
 * Fan speed adjustment
 * Toggle between manual and auto mode
 * Reports air quality
-* Reports change indication and life levels of both filters  
+* Reports change indication and life levels of both filters (only visible in the Elgato Eve app)
+* Includes a light accessory to control the lights on the purifier
+
+## Tested Siri Commands
+
+These commands have been known to work:
+
+* "Turn the air purifier on"
+* "Turn the air purifier off"
+* "Set the air purifier to auto"
+* "Set the air purifier to manual"
+* "Set the air purifier fan to 50%"
+* "What's the air quality in \<room name\>?"
+
+Multiple air purifiers can be differentiated by replacing the phrase "air purifier" with its name.
