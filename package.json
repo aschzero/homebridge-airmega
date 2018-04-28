@@ -6,12 +6,9 @@
 	"author": "Andrew Schaper",
 	"license": "MIT",
 	"dependencies": {
-		"@types/request": "^2.47.0",
 		"@types/request-promise": "^4.1.41",
 		"@types/ws": "0.0.38",
-		"request": "^2.85.0",
 		"request-promise": "^4.2.2",
-		"ts-deferred": "^1.0.4",
 		"typescript": "^2.8.1",
 		"ws": "^5.0.0"
 	},

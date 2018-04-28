@@ -1,6 +1,4 @@
 import * as Request from 'request-promise';
-import * as RRequest from 'request';
-
 import * as WebSocket from 'ws';
 
 import { Logger } from "./Logger";
