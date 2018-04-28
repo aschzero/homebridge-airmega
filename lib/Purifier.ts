@@ -1,9 +1,9 @@
 import * as Request from 'request-promise';
 import * as WebSocket from 'ws';
 
-import { Logger } from "./Logger";
-import { APIConfig } from "./APIConfig";
-import { PurifierMetadataProperties, PurifierProperties, FilterProperties } from "./interfaces/Purifier";
+import { Logger } from './Logger';
+import { APIConfig } from './APIConfig';
+import { PurifierMetadataProperties, PurifierProperties, FilterProperties } from './interfaces/Purifier';
 import { Authenticator } from './APIAuthenticator';
 
 export class Purifier {
@@ -23,7 +23,8 @@ export class Purifier {
       filter1ExchAlarm: false,
       filter2ExchAlarm: false
     }
-    this.properties = props
+
+    this.properties = props;
 
     this.subscribeToWebsocket();
     this.getLatestData();
@@ -51,8 +52,6 @@ export class Purifier {
       }
 
       this.properties = (data.body as PurifierProperties);   
-
-      Logger.log(`Got data: ${JSON.stringify(data)}`);
     });
 
     this.socket.onclose = () => {
