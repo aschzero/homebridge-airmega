@@ -8,6 +8,7 @@
 	"dependencies": {
 		"@types/request-promise": "^4.1.41",
 		"@types/ws": "0.0.38",
+		"request": "^2.34",
 		"request-promise": "^4.2.2",
 		"typescript": "^2.8.1",
 		"ws": "^5.0.0"
