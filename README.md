@@ -30,7 +30,6 @@ Example homebridge configuration file:
   "platforms": [
     {
       "platform": "Airmega",
-      "name": "Air Purifier",
       "email": "my@email.com",
       "password": "password123"
     }
@@ -42,8 +41,8 @@ The plugin will discover all connected purifiers when homebridge is restarted.
 
 ### Required Fields
 * **platform** - Set to "Airmega"
-* **name** - Name of the accessories that appears in HomeKit
-* **email/password** - Your login credentials
+* **email** - The email you use to log into the Airmega app
+* **password** - The password you use to log into the Airmega app
 
 ## Functionality
 
