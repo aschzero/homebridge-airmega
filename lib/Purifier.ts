@@ -46,8 +46,8 @@ export class Purifier {
     this.socket.onmessage = ((message) => {
       let data = JSON.parse(message.data);
 
+      // Empty responses are sometimes expected and usually occur right after logging in
       if (!data.hasOwnProperty('body') || Object.keys(data.body).length == 0) {
-        Logger.log('No data found in response');
         return;
       }
 
