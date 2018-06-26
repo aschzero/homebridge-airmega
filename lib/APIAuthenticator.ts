@@ -33,7 +33,7 @@ class APIAuthenticator {
         }
 
         let result = response.body as AuthenticationResult;
-        
+
         if (!result.userToken) {
           throw Error(`Authentication response does not contain a user token: ${result}`);
         }
@@ -42,7 +42,6 @@ class APIAuthenticator {
         Logger.log('Successfully logged in');
         resolve(result.purifiers);
       }).catch((err) => {
-        Logger.log(`Encountered an error when trying to get user token: ${err}`);
         reject(err);
       });
     });

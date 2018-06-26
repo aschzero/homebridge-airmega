@@ -11,7 +11,7 @@ export class AirmegaPlatform {
   platform: Platform;
   accessories: Array<Accessory>;
   registeredAccessories: Map<string, Accessory>;
-  log: Log;  
+  log: Log;
 
   constructor(log: Log, config: AccessoryConfig, platform: Platform) {
     Logger.setLog(log);
@@ -31,6 +31,8 @@ export class AirmegaPlatform {
 
         Authenticator.authenticate(email, password, this.log).then((purifiers) => {
           purifiers.forEach(purifier => this.addAccessory(purifier));
+        }).catch(err => {
+          Logger.log(`Encountered an error when trying to get user token: ${err}`);
         });
       });
     }
@@ -38,7 +40,7 @@ export class AirmegaPlatform {
 
   configureAccessory(accessory: Accessory): void {
     accessory.updateReachability(false);
-    
+
     this.registeredAccessories.set(accessory.UUID, accessory);
   }
 
