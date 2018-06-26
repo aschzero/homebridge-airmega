@@ -1,7 +1,7 @@
 import * as Request from 'request-promise';
 
 import { Log } from './interfaces/Log';
-import { Logger } from './Logger';
+import { Logger } from './HALogger';
 import { APIConfig } from './APIConfig';
 import { AuthenticationResult } from './interfaces/AuthenticationResult';
 import { PurifierMetadataProperties } from './interfaces/Purifier';

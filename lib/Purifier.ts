@@ -1,7 +1,7 @@
 import * as Request from 'request-promise';
 import * as WebSocket from 'ws';
 
-import { Logger } from './Logger';
+import { Logger } from './HALogger';
 import { APIConfig } from './APIConfig';
 import { PurifierMetadataProperties, PurifierProperties, FilterProperties } from './interfaces/Purifier';
 import { Authenticator } from './APIAuthenticator';
@@ -51,7 +51,7 @@ export class Purifier {
         return;
       }
 
-      this.properties = (data.body as PurifierProperties);   
+      this.properties = (data.body as PurifierProperties);
     });
 
     this.socket.onclose = () => {
@@ -76,7 +76,7 @@ export class Purifier {
         userToken: Authenticator.token
       }
     }
-    
+
     return new Promise((resolve, reject) => {
       Request(options).then((response) => {
         resolve(true);

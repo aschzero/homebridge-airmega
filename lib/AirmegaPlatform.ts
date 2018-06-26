@@ -1,5 +1,5 @@
 import { Platform } from './interfaces/Platform';
-import { Logger } from './Logger';
+import { Logger } from './HALogger';
 import { AccessoryConfig } from './interfaces/AccessoryConfig';
 import { Authenticator } from './APIAuthenticator';
 import { Hap } from './HAP';
@@ -14,7 +14,7 @@ export class AirmegaPlatform {
   log: Log;
 
   constructor(log: Log, config: AccessoryConfig, platform: Platform) {
-    Logger.setLog(log);
+    Logger.setLogger(log);
 
     this.platform = platform;
     this.accessories = [];

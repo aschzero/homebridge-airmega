@@ -1,7 +1,7 @@
 import { PurifierProperties, PurifierMetadataProperties } from './interfaces/Purifier';
 import { Accessory, Service } from './interfaces/HAP';
 import { Purifier } from './Purifier';
-import { Logger } from './Logger';
+import { Logger } from './HALogger';
 import { Hap } from './HAP';
 
 export class PurifierAccessory {
@@ -30,7 +30,7 @@ export class PurifierAccessory {
     if (!purifierService) {
       purifierService = this.accessory.addService(Hap.Service.AirPurifier, this.properties.aliasName);
     }
-    
+
     return purifierService;
   }
 
@@ -40,7 +40,7 @@ export class PurifierAccessory {
     if (!airQualityService) {
       airQualityService = this.accessory.addService(Hap.Service.AirQualitySensor, this.properties.aliasName);
     }
-    
+
     return airQualityService;
   }
 
@@ -50,7 +50,7 @@ export class PurifierAccessory {
     if (!filterService) {
       filterService = this.accessory.addService(Hap.Service.FilterMaintenance, 'Pre Filter', 'pre');
     }
-    
+
     return filterService;
   }
 
@@ -60,7 +60,7 @@ export class PurifierAccessory {
     if (!filterService) {
       filterService = this.accessory.addService(Hap.Service.FilterMaintenance, 'Max 2 Filter', 'main');
     }
-    
+
     return filterService;
   }
 
@@ -70,7 +70,7 @@ export class PurifierAccessory {
     if (!lightbulbService) {
       lightbulbService = this.accessory.addService(Hap.Service.Lightbulb, this.properties.aliasName);
     }
-    
+
     return lightbulbService;
   }
 
@@ -102,7 +102,7 @@ export class PurifierAccessory {
 
   setupFilterMaintenanceServiceCharacteristics(): void {
     let mainFilterService = this.getOrCreateMainFilterService();
-    let preFilterService = this.getOrCreatePreFilterService();    
+    let preFilterService = this.getOrCreatePreFilterService();
 
   this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'main')
     .getCharacteristic(Hap.Characteristic.FilterChangeIndication)
@@ -138,13 +138,13 @@ export class PurifierAccessory {
 
   getActive(callback): void {
     if (!this.purifier.properties) return;
-    
+
     if (this.purifier.properties.power) {
       Logger.log(this.properties.aliasName, 'is active');
       callback(null, Hap.Characteristic.Active.ACTIVE);
     } else {
       Logger.log(this.properties.aliasName, 'is inactive');
-      callback(null, Hap.Characteristic.Active.INACTIVE);        
+      callback(null, Hap.Characteristic.Active.INACTIVE);
     }
   }
 
@@ -180,7 +180,7 @@ export class PurifierAccessory {
   getCurrentAirPurifierState(callback): void {
     if (!this.purifier.properties) return;
     this.purifier.getLatestData();
-    
+
     if (!this.purifier.properties.power) {
       callback(null, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
       return;
@@ -198,7 +198,7 @@ export class PurifierAccessory {
 
   getTargetPurifierState(callback): void {
     if (!this.purifier.properties) return;
-    
+
     if (this.purifier.properties.mode == 0) {
       Logger.log('Target purifier state is manual');
       callback(null, Hap.Characteristic.TargetAirPurifierState.MANUAL);
@@ -210,7 +210,7 @@ export class PurifierAccessory {
 
   setTargetPurifierState(targetState, callback): void {
     let targetMode;
-    
+
     if (targetState) {
       Logger.log('Setting mode to auto');
       targetMode = -1;
@@ -320,7 +320,7 @@ export class PurifierAccessory {
 
   getLightIndicator(callback): void {
     if (!this.purifier.properties) return;
-    
+
     this.purifier.getLatestData().then(() => {
       let isOn: boolean = (this.purifier.properties.mood == 2);
 
