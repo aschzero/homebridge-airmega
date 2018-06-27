@@ -1,10 +1,11 @@
-import { Platform } from './interfaces/Platform';
+import { Communicator } from './api/Communicator';
+import { Authenticator } from './api/Authenticator';
+import { AccessoryConfig } from './definitions/AccessoryConfig';
+import { Accessory, Log } from './definitions/HAP';
+import { Platform } from './definitions/Platform';
+import { PurifierMetadata } from './definitions/Purifier';
 import { Logger } from './HALogger';
-import { AccessoryConfig } from './interfaces/AccessoryConfig';
-import { Authenticator } from './APIAuthenticator';
 import { Hap } from './HAP';
-import { Accessory, Log } from './interfaces/HAP';
-import { PurifierProperties, PurifierMetadataProperties } from './interfaces/Purifier';
 import { PurifierAccessory } from './PurifierAccessory';
 
 export class AirmegaPlatform {
@@ -22,20 +23,34 @@ export class AirmegaPlatform {
 
     if (this.platform) {
       this.platform.on('didFinishLaunching', () => {
-        let email = config['email'];
+        let username = config['username'];
         let password = config['password'];
 
-        if (!email || !password) {
-          throw Error('email and password fields are required in config');
+        if (!username || !password) {
+          throw Error('username and password fields are required in config');
         }
 
-        Authenticator.authenticate(email, password, this.log).then((purifiers) => {
-          purifiers.forEach(purifier => this.addAccessory(purifier));
-        }).catch(err => {
-          Logger.log(`Encountered an error when trying to get user token: ${err}`);
-        });
+        try {
+          Logger.log('Authenticating...');
+          this.retrievePurifiers(username, password);
+        } catch(e) {
+          Logger.log(`Unable to retrieve purifiers: ${e}`);
+        }
       });
     }
+  }
+
+  async retrievePurifiers(username: string, password: string) {
+    let authenticator = new Authenticator();
+    let communicator = new Communicator();
+
+    await authenticator.authenticate(username, password);
+
+    let purifiers = await communicator.getPurifiers();
+    purifiers.forEach(purifier => {
+      Logger.log(`Found ${purifier.nickname}`);
+      this.addAccessory(purifier);
+    });
   }
 
   configureAccessory(accessory: Accessory): void {
@@ -44,17 +59,17 @@ export class AirmegaPlatform {
     this.registeredAccessories.set(accessory.UUID, accessory);
   }
 
-  addAccessory(properties: PurifierMetadataProperties): void {
-    let uuid: string = Hap.UUIDGen.generate(properties.aliasName);
+  addAccessory(purifier: PurifierMetadata): void {
+    let uuid: string = Hap.UUIDGen.generate(purifier.nickname);
     let accessory: Accessory;
 
     if (this.registeredAccessories.get(uuid)) {
       accessory = this.registeredAccessories.get(uuid);
     } else {
-      accessory = new Hap.Accessory(properties.aliasName, uuid);
+      accessory = new Hap.Accessory(purifier.nickname, uuid);
     }
 
-    let purifierAccessory = new PurifierAccessory(accessory, properties);
+    new PurifierAccessory(accessory, purifier);
 
     accessory.on('identify', (paired, callback) => {
       callback();
