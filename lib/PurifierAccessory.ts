@@ -128,8 +128,8 @@ export class PurifierAccessory {
   }
 
   setupFilterMaintenanceServiceCharacteristics(): void {
-    let mainFilterService = this.getOrCreateMainFilterService();
-    let preFilterService = this.getOrCreatePreFilterService();
+    this.getOrCreateMainFilterService();
+    this.getOrCreatePreFilterService();
 
   this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'main')
     .getCharacteristic(Hap.Characteristic.FilterChangeIndication)
