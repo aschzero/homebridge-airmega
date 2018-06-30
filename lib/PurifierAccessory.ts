@@ -1,3 +1,4 @@
+import { Config } from './Config';
 import { Logger } from './HALogger';
 import { Hap } from './HAP';
 import { PurifierCommunicator } from './PurifierCommunicator';
@@ -5,10 +6,12 @@ import { HAP, Purifier } from './types';
 
 export class PurifierAccessory {
   communicator: PurifierCommunicator;
-  status: Purifier.Status;
   metadata: Purifier.Metadata;
   accessory: HAP.Accessory;
   purifierService: HAP.Service;
+  status: Purifier.Status;
+  preFilterStatus: Purifier.FilterStatus;
+  mainFilterStatus: Purifier.FilterStatus;
 
   constructor(accessory: HAP.Accessory, metadata: Purifier.Metadata) {
     this.metadata = metadata;
@@ -18,7 +21,7 @@ export class PurifierAccessory {
     this.setupAccessoryInformationServiceCharacteristics();
     this.setupPurifierServiceCharacteristics();
     this.setupAirQualityServiceCharacteristics();
-    // this.setupFilterMaintenanceServiceCharacteristics();
+    this.setupFilterMaintenanceServiceCharacteristics();
     // this.setupLightbulbServiceCharacteristics();
 
     this.updateStatus();
@@ -28,6 +31,14 @@ export class PurifierAccessory {
   async updateStatus() {
     try {
       this.status = await this.communicator.getStatus();
+
+      let filterStatus = await this.communicator.getFilterStatus();
+      this.preFilterStatus = filterStatus.find(filter => {
+        return filter.name == Config.Accessory.PRE_FILTER;
+      });
+      this.mainFilterStatus = filterStatus.find(filter => {
+        return filter.name == Config.Accessory.MAIN_FILTER;
+      });
     } catch(e) {
       Logger.log(`Unable to update purifier status: ${e}`);
     }
@@ -116,28 +127,26 @@ export class PurifierAccessory {
       .on('get', this.getAirQuality.bind(this));
   }
 
-  // setupFilterMaintenanceServiceCharacteristics(): void {
-  //   let mainFilterService = this.getOrCreateMainFilterService();
-  //   let preFilterService = this.getOrCreatePreFilterService();
+  setupFilterMaintenanceServiceCharacteristics(): void {
+    let mainFilterService = this.getOrCreateMainFilterService();
+    let preFilterService = this.getOrCreatePreFilterService();
 
-  // this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'main')
-  //   .getCharacteristic(Hap.Characteristic.FilterChangeIndication)
-  //   .on('get', this.getMainFilterChangeIndication.bind(this));
+  this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'main')
+    .getCharacteristic(Hap.Characteristic.FilterChangeIndication)
+    .on('get', this.getMainFilterChangeIndication.bind(this));
 
-  // this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'main')
-  //   .getCharacteristic(Hap.Characteristic.FilterLifeLevel)
-  //   .on('get', this.getMainFilterLifeLevel.bind(this));
+  this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'main')
+    .getCharacteristic(Hap.Characteristic.FilterLifeLevel)
+    .on('get', this.getMainFilterLifeLevel.bind(this));
 
-  // this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'pre')
-  //   .getCharacteristic(Hap.Characteristic.FilterChangeIndication)
-  //   .on('get', this.getPreFilterChangeIndication.bind(this));
+  this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'pre')
+    .getCharacteristic(Hap.Characteristic.FilterChangeIndication)
+    .on('get', this.getPreFilterChangeIndication.bind(this));
 
-  // this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'pre')
-  //   .getCharacteristic(Hap.Characteristic.FilterLifeLevel)
-  //   .on('get', this.getPreFilterLifeLevel.bind(this));
-  // }
-
-
+  this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'pre')
+    .getCharacteristic(Hap.Characteristic.FilterLifeLevel)
+    .on('get', this.getPreFilterLifeLevel.bind(this));
+  }
 
   // setupLightbulbServiceCharacteristics(): void {
   //   let lightbulbService = this.getOrCreateLightbulbService();
@@ -254,43 +263,29 @@ export class PurifierAccessory {
     });
   }
 
-  // getPreFilterChangeIndication(callback) {
-  //   if (this.purifier.properties.filter2ExchAlarm) {
-  //     callback(null, Hap.Characteristic.FilterChangeIndication.CHANGE_FILTER);
-  //   } else {
-  //     callback(null, Hap.Characteristic.FilterChangeIndication.FILTER_OK);
-  //   }
-  // }
+  getPreFilterChangeIndication(callback) {
+    if (this.preFilterStatus.lifeLevel <= 20) {
+      callback(null, Hap.Characteristic.FilterChangeIndication.CHANGE_FILTER);
+    } else {
+      callback(null, Hap.Characteristic.FilterChangeIndication.FILTER_OK);
+    }
+  }
 
-  // getPreFilterLifeLevel(callback) {
-  //   this.purifier.getFilterLifeLevels().then((data) => {
-  //     callback(null, data.prefilter);
-  //   }).catch((err) => {
-  //     Logger.log(err);
-  //     callback(err);
-  //   });
-  // }
+  getPreFilterLifeLevel(callback) {
+    callback(null, this.preFilterStatus.lifeLevel);
+  }
 
-  // getMainFilterChangeIndication(callback) {
-  //   if (!this.purifier.properties) return;
+  getMainFilterChangeIndication(callback) {
+    if (this.mainFilterStatus.lifeLevel <= 20) {
+      callback(null, Hap.Characteristic.FilterChangeIndication.CHANGE_FILTER);
+    } else {
+      callback(null, Hap.Characteristic.FilterChangeIndication.FILTER_OK);
+    }
+  }
 
-  //   if (this.purifier.properties.filter1ExchAlarm) {
-  //     callback(null, Hap.Characteristic.FilterChangeIndication.CHANGE_FILTER);
-  //   } else {
-  //     callback(null, Hap.Characteristic.FilterChangeIndication.FILTER_OK);
-  //   }
-  // }
-
-  // getMainFilterLifeLevel(callback) {
-  //   if (!this.purifier.properties) return;
-
-  //   this.purifier.getFilterLifeLevels().then((data) => {
-  //     callback(null, data.hepafilter);
-  //   }).catch((err) => {
-  //     Logger.log(err);
-  //     callback(err);
-  //   });
-  // }
+  getMainFilterLifeLevel(callback) {
+    callback(null, this.mainFilterStatus.lifeLevel);
+  }
 
   getAirQuality(callback): void {
     let result;

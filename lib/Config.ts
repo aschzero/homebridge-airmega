@@ -20,11 +20,17 @@ export namespace Config {
     export const DEVICE_LIST = 'CWIL0100';
     export const STATUS = 'CWIA0100';
     export const CONTROL = 'CWIG0603';
+    export const FILTERS = 'CWIA0800';
   }
 
   export namespace Codes {
     export const POWER = '0001';
     export const MODE = '0002';
     export const FAN = '0003';
+  }
+
+  export namespace Accessory {
+    export const PRE_FILTER = 'Pre Filter';
+    export const MAIN_FILTER = 'Max2 Filter';
   }
 }

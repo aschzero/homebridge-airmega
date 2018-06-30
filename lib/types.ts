@@ -119,6 +119,11 @@ export namespace Purifier {
     airQuality: AirQuality
   }
 
+  export interface FilterStatus {
+    name: string
+    lifeLevel: number
+  }
+
   export interface Metadata {
     nickname: string
     barcode: string

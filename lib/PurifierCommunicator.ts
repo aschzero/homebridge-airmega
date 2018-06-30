@@ -34,8 +34,6 @@ export class PurifierCommunicator {
     let payload: Request.Payload = this.buildStatusPayload(Config.Endpoints.STATUS);
     let response = await this.sendRequest(payload);
 
-    Purifier.State['0']
-
     let statusResponse = response.body.prodStatus[0];
 
     let status: Purifier.Status = {
@@ -46,9 +44,27 @@ export class PurifierCommunicator {
       airQuality: statusResponse['dustPollution']
     }
 
-    Logger.debug('Status object', status);
+    Logger.debug('Status', status);
 
     return status;
+  }
+
+  async getFilterStatus(): Promise<Purifier.FilterStatus[]> {
+    let payload: Request.Payload = this.buildStatusPayload(Config.Endpoints.FILTERS);
+    let response = await this.sendRequest(payload);
+
+    let filterStatuses = response.body.filterList.map(filter => {
+      let filterStatus: Purifier.FilterStatus = {
+        name: filter.filterName,
+        lifeLevel: filter.filterPer
+      }
+
+      return filterStatus;
+    })
+
+    Logger.debug('Filter status', filterStatuses);
+
+    return filterStatuses;
   }
 
   async setPower(on: boolean): Promise<void> {
@@ -137,7 +153,7 @@ export class PurifierCommunicator {
       body: {
         barcode: this.deviceId,
         dvcBrandCd: 'MG',
-        prodname: 'AIRMEGA',
+        prodName: 'AIRMEGA',
         stationCd: '',
         resetDttm: '',
         deviceType: '004'
