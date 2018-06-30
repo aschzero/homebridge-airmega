@@ -104,13 +104,19 @@ export namespace Purifier {
     AutoSleep = '6'
   }
 
+  export enum AirQuality {
+    Excellent = '1',
+    Good = '2',
+    Fair = '3',
+    Inferior = '4'
+  }
+
   export interface Status {
     power: Power
     light: Light
     fan: Fan
     state: State
-    // pollution: number;
-
+    airQuality: AirQuality
   }
 
   export interface Metadata {

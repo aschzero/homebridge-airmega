@@ -42,7 +42,8 @@ export class PurifierCommunicator {
       power: statusResponse['power'],
       light: statusResponse['light'],
       fan: statusResponse['airVolume'],
-      state: statusResponse['prodMode']
+      state: statusResponse['prodMode'],
+      airQuality: statusResponse['dustPollution']
     }
 
     Logger.debug('Status object', status);

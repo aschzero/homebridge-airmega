@@ -17,7 +17,7 @@ export class PurifierAccessory {
 
     this.setupAccessoryInformationServiceCharacteristics();
     this.setupPurifierServiceCharacteristics();
-    // this.setupAirQualityServiceCharacteristics();
+    this.setupAirQualityServiceCharacteristics();
     // this.setupFilterMaintenanceServiceCharacteristics();
     // this.setupLightbulbServiceCharacteristics();
 
@@ -109,6 +109,13 @@ export class PurifierAccessory {
       .on('set', this.setRotationSpeed.bind(this));
   }
 
+  setupAirQualityServiceCharacteristics(): void {
+    let airQualityService = this.getOrCreateAirQualityService();
+
+    airQualityService.getCharacteristic(Hap.Characteristic.AirQuality)
+      .on('get', this.getAirQuality.bind(this));
+  }
+
   // setupFilterMaintenanceServiceCharacteristics(): void {
   //   let mainFilterService = this.getOrCreateMainFilterService();
   //   let preFilterService = this.getOrCreatePreFilterService();
@@ -130,12 +137,7 @@ export class PurifierAccessory {
   //   .on('get', this.getPreFilterLifeLevel.bind(this));
   // }
 
-  // setupAirQualityServiceCharacteristics(): void {
-  //   let airQualityService = this.getOrCreateAirQualityService();
 
-  //   airQualityService.getCharacteristic(Hap.Characteristic.AirQuality)
-  //     .on('get', this.getAirQuality.bind(this));
-  // }
 
   // setupLightbulbServiceCharacteristics(): void {
   //   let lightbulbService = this.getOrCreateLightbulbService();
@@ -290,27 +292,25 @@ export class PurifierAccessory {
   //   });
   // }
 
-  // getAirQuality(callback): void {
-  //   if (!this.purifier.properties) return;
+  getAirQuality(callback): void {
+    let result;
+    switch (this.status.airQuality) {
+      case Purifier.AirQuality.Excellent:
+        result = Hap.Characteristic.AirQuality.EXCELLENT;
+        break;
+      case Purifier.AirQuality.Good:
+        result = Hap.Characteristic.AirQuality.GOOD;
+        break;
+      case Purifier.AirQuality.Fair:
+        result = Hap.Characteristic.AirQuality.FAIR;
+        break;
+      case Purifier.AirQuality.Inferior:
+        result = Hap.Characteristic.AirQuality.INFERIOR;
+        break;
+    }
 
-  //   let result;
-  //   switch (this.purifier.properties.dustPollutionLev) {
-  //     case 1:
-  //       result = Hap.Characteristic.AirQuality.EXCELLENT;
-  //       break;
-  //     case 2:
-  //       result = Hap.Characteristic.AirQuality.GOOD;
-  //       break;
-  //     case 3:
-  //       result = Hap.Characteristic.AirQuality.FAIR;
-  //       break;
-  //     case 4:
-  //       result = Hap.Characteristic.AirQuality.INFERIOR;
-  //       break;
-  //   }
-
-  //   callback(null, result);
-  // }
+    callback(null, result);
+  }
 
   // getLightIndicator(callback): void {
   //   if (!this.purifier.properties) return;
