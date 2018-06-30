@@ -1,25 +1,22 @@
 import { Authenticator } from './api/Authenticator';
-import { AccessoryConfig } from './definitions/AccessoryConfig';
-import { Accessory, Log } from './definitions/HAP';
-import { Platform } from './definitions/Platform';
-import { PurifierMetadata } from './definitions/Purifier';
+import { PurifierCommunicator } from './api/PurifierCommunicator';
+import { HAP, Purifier } from './types';
 import { Logger } from './HALogger';
 import { Hap } from './HAP';
 import { PurifierAccessory } from './PurifierAccessory';
-import { PurifierCommunicator } from './api/PurifierCommunicator';
 
 export class AirmegaPlatform {
-  platform: Platform;
-  accessories: Array<Accessory>;
-  registeredAccessories: Map<string, Accessory>;
-  log: Log;
+  platform: HAP.Platform;
+  accessories: Array<HAP.Accessory>;
+  registeredAccessories: Map<string, HAP.Accessory>;
+  log: HAP.Log;
 
-  constructor(log: Log, config: AccessoryConfig, platform: Platform) {
+  constructor(log: HAP.Log, config: HAP.AccessoryConfig, platform: HAP.Platform) {
     Logger.setLogger(log, config['debug']);
 
     this.platform = platform;
     this.accessories = [];
-    this.registeredAccessories = new Map<string, Accessory>();
+    this.registeredAccessories = new Map<string, HAP.Accessory>();
 
     if (this.platform) {
       this.platform.on('didFinishLaunching', () => {
@@ -57,15 +54,15 @@ export class AirmegaPlatform {
     });
   }
 
-  configureAccessory(accessory: Accessory): void {
+  configureAccessory(accessory: HAP.Accessory): void {
     accessory.updateReachability(false);
 
     this.registeredAccessories.set(accessory.UUID, accessory);
   }
 
-  addAccessory(purifier: PurifierMetadata): void {
+  addAccessory(purifier: Purifier.Metadata): void {
     let uuid: string = Hap.UUIDGen.generate(purifier.nickname);
-    let accessory: Accessory;
+    let accessory: HAP.Accessory;
 
     if (this.registeredAccessories.get(uuid)) {
       accessory = this.registeredAccessories.get(uuid);

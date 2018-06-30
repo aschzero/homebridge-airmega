@@ -18,7 +18,7 @@ export namespace Config {
 
   export namespace Endpoints {
     export const DEVICE_LIST = 'CWIL0100';
-    export const STATUS = 'CWIG0602';
+    export const STATUS = 'CWIA0100';
     export const CONTROL = 'CWIG0603';
   }
 

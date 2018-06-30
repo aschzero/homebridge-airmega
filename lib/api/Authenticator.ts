@@ -1,7 +1,7 @@
 import * as request from 'request-promise';
 import * as store from 'store';
 
-import { AuthenticatePayload, OAuthPayload } from '../definitions/api/Payload';
+import { Request } from '../types';
 import { Logger } from '../HALogger';
 import { Config } from './Config';
 
@@ -58,8 +58,8 @@ export class Authenticator {
     }
   }
 
-  private buildOauthPayload(): OAuthPayload {
-    let options: OAuthPayload = {
+  private buildOauthPayload(): Request.OAuthPayload {
+    let options: Request.OAuthPayload = {
       uri: Config.Auth.OAUTH_URL,
       method: 'GET',
       resolveWithFullResponse: true,
@@ -79,8 +79,8 @@ export class Authenticator {
     return options;
   }
 
-  private buildAuthenticatePayload(username: string, password: string, state: string): AuthenticatePayload {
-    let options: AuthenticatePayload = {
+  private buildAuthenticatePayload(username: string, password: string, state: string): Request.AuthenticatePayload {
+    let options: Request.AuthenticatePayload = {
       uri: Config.Auth.SIGNIN_URL,
       headers: {
         'Content-Type': Config.ContentType.JSON,

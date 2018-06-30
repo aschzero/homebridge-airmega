@@ -1,10 +1,7 @@
 import * as request from 'request-promise';
 import * as store from 'store';
 
-import { Message, MessageHeader } from '../definitions/api/Message';
-import { Payload } from '../definitions/api/Payload';
-import { PurifierMetadata, PurifierStatus } from '../definitions/Purifier';
-import { Store } from '../definitions/Store';
+import { Purifier, Request } from '../types';
 import { Logger } from '../HALogger';
 import { Config } from './Config';
 
@@ -15,16 +12,16 @@ export class PurifierCommunicator {
     this.deviceId = deviceId;
   }
 
-  async getPurifiers(): Promise<PurifierMetadata[]> {
-    let payload: Payload = this.buildPayload(Config.Endpoints.DEVICE_LIST);
+  async getPurifiers(): Promise<Purifier.Metadata[]> {
+    let payload: Request.Payload = this.buildPayload(Config.Endpoints.DEVICE_LIST);
 
     try {
       let response = await this.sendRequest(payload);
-      let purifiers: PurifierMetadata[] = response.body.deviceInfos.map(device => {
+      let purifiers: Purifier.Metadata[] = response.body.deviceInfos.map(device => {
         return {
           nickname: device.dvcNick,
           barcode: device.barcode
-        } as PurifierMetadata;
+        } as Purifier.Metadata;
       });
 
       return purifiers;
@@ -33,17 +30,19 @@ export class PurifierCommunicator {
     }
   }
 
-  async getStatus(): Promise<PurifierStatus> {
-    let payload: Payload = this.buildPayload(Config.Endpoints.STATUS);
-
+  async getStatus(): Promise<Purifier.Status> {
+    let payload: Request.Payload = this.buildStatusPayload(Config.Endpoints.STATUS);
     let response = await this.sendRequest(payload);
-    let statusResponse = response.body.controlStatus;
 
-    let status: PurifierStatus = {
-      on: (statusResponse['0001'] == '1'),
-      lightOn: (statusResponse['0007'] == '2'),
-      fanSpeed: statusResponse['0003'],
-      auto: (statusResponse['0002'] == '1'),
+    Purifier.State['0']
+
+    let statusResponse = response.body.prodStatus[0];
+
+    let status: Purifier.Status = {
+      power: statusResponse['power'],
+      light: statusResponse['light'],
+      fan: statusResponse['airVolume'],
+      state: statusResponse['prodMode']
     }
 
     Logger.debug('Status object', status);
@@ -84,7 +83,7 @@ export class PurifierCommunicator {
     }
   }
 
-  private async sendRequest(payload: Payload) {
+  private async sendRequest(payload: Request.Payload) {
     Logger.debug('Sending payload', payload);
 
     let response = await request(payload);
@@ -93,23 +92,23 @@ export class PurifierCommunicator {
     return response;
   }
 
-  private buildPayload(endpoint: string): Payload {
-    let tokens: Store = store.get('tokens');
+  private buildPayload(endpoint: string): Request.Payload {
+    let tokens = store.get('tokens');
 
-    let header: MessageHeader = {
+    let header: Request.MessageHeader = {
       trcode: endpoint,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken
     }
 
-    let message: Message = {
+    let message: Request.Message = {
       header: header,
       body: {
         barcode: this.deviceId
       }
     }
 
-    let payload: Payload = {
+    let payload: Request.Payload = {
       uri: `${Config.BASE_URI}/${endpoint}.json`,
       headers: {
         'Content-Type': Config.ContentType.FORM,
@@ -123,16 +122,51 @@ export class PurifierCommunicator {
     return payload;
   }
 
-  private buildControlPayload(code: string, value: string) {
-    let tokens: Store = store.get('tokens');
+  private buildStatusPayload(endpoint: string): Request.Payload {
+    let tokens = store.get('tokens');
 
-    let header: MessageHeader = {
+    let header: Request.MessageHeader = {
+      trcode: endpoint,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken
+    }
+
+    let message: Request.Message = {
+      header: header,
+      body: {
+        barcode: this.deviceId,
+        dvcBrandCd: 'MG',
+        prodname: 'AIRMEGA',
+        stationCd: '',
+        resetDttm: '',
+        deviceType: '004'
+      }
+    }
+
+    let payload: Request.Payload = {
+      uri: `${Config.BASE_URI}/${endpoint}.json`,
+      headers: {
+        'Content-Type': Config.ContentType.FORM,
+        'User-Agent': Config.USER_AGENT
+      },
+      method: 'POST',
+      json: true,
+      form: `message=${encodeURIComponent(JSON.stringify(message))}`
+    }
+
+    return payload;
+  }
+
+  private buildControlPayload(code: string, value: string): Request.Payload {
+    let tokens = store.get('tokens');
+
+    let header: Request.MessageHeader = {
       trcode: Config.Endpoints.CONTROL,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken
     }
 
-    let message: Message = {
+    let message: Request.Message = {
       header: header,
       body: {
         barcode: this.deviceId,
@@ -143,7 +177,7 @@ export class PurifierCommunicator {
       }
     }
 
-    let payload: Payload = {
+    let payload: Request.Payload = {
       uri: `${Config.BASE_URI}/${Config.Endpoints.CONTROL}.json`,
       headers: {
         'Content-Type': Config.ContentType.FORM,

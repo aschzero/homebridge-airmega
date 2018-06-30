@@ -1,17 +1,16 @@
-import { Accessory, Service } from './definitions/HAP';
-import { PurifierMetadata, PurifierStatus } from './definitions/Purifier';
+import { PurifierCommunicator } from './api/PurifierCommunicator';
 import { Logger } from './HALogger';
 import { Hap } from './HAP';
-import { PurifierCommunicator } from './api/PurifierCommunicator';
+import { Purifier, HAP } from './types';
 
 export class PurifierAccessory {
   communicator: PurifierCommunicator;
-  status: PurifierStatus;
-  metadata: PurifierMetadata;
-  accessory: Accessory;
-  purifierService: Service;
+  status: Purifier.Status;
+  metadata: Purifier.Metadata;
+  accessory: HAP.Accessory;
+  purifierService: HAP.Service;
 
-  constructor(accessory: Accessory, metadata: PurifierMetadata) {
+  constructor(accessory: HAP.Accessory, metadata: Purifier.Metadata) {
     this.metadata = metadata;
     this.accessory = accessory;
     this.communicator = new PurifierCommunicator(this.metadata.barcode);
@@ -34,7 +33,7 @@ export class PurifierAccessory {
     }
   }
 
-  getOrCreatePurifierService(): Service {
+  getOrCreatePurifierService(): HAP.Service {
     let purifierService = this.accessory.getService(Hap.Service.AirPurifier);
 
     if (!purifierService) {
@@ -44,7 +43,7 @@ export class PurifierAccessory {
     return purifierService;
   }
 
-  getOrCreateAirQualityService(): Service {
+  getOrCreateAirQualityService(): HAP.Service {
     let airQualityService = this.accessory.getService(Hap.Service.AirQualitySensor);
 
     if (!airQualityService) {
@@ -54,7 +53,7 @@ export class PurifierAccessory {
     return airQualityService;
   }
 
-  getOrCreatePreFilterService(): Service {
+  getOrCreatePreFilterService(): HAP.Service {
     let filterService = this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'pre');
 
     if (!filterService) {
@@ -64,7 +63,7 @@ export class PurifierAccessory {
     return filterService;
   }
 
-  getOrCreateMainFilterService(): Service {
+  getOrCreateMainFilterService(): HAP.Service {
     let filterService = this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'main');
 
     if (!filterService) {
@@ -74,7 +73,7 @@ export class PurifierAccessory {
     return filterService;
   }
 
-  getOrCreateLightbulbService(): Service {
+  getOrCreateLightbulbService(): HAP.Service {
     let lightbulbService = this.accessory.getService(Hap.Service.Lightbulb);
 
     if (!lightbulbService) {
@@ -147,7 +146,7 @@ export class PurifierAccessory {
   // }
 
   getActive(callback): void {
-    if (this.status.on) {
+    if (this.status.power == Purifier.Power.On) {
       Logger.log(this.metadata.nickname, 'is active');
       callback(null, Hap.Characteristic.Active.ACTIVE);
     } else {
@@ -160,7 +159,7 @@ export class PurifierAccessory {
     // Only toggle power when new state is different.
     // Prevents extraneous calls especially when changing
     // the fan speed (setRotationSpeed ensures device is on).
-    if (this.status.on == targetState) {
+    if (this.status.power == targetState) {
       callback(null);
       return;
     }
@@ -186,12 +185,12 @@ export class PurifierAccessory {
   getCurrentAirPurifierState(callback): void {
     this.updateStatus();
 
-    if (!this.status.on) {
+    if (!(this.status.power == Purifier.Power.Off)) {
       callback(null, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
       return;
     }
 
-    if (this.status.fanSpeed == 0) {
+    if (this.status.state == Purifier.State.Sleep || this.status.state == Purifier.State.AutoSleep) {
       Logger.log(this.metadata.nickname, 'Current state is idle');
       callback(null, Hap.Characteristic.CurrentAirPurifierState.IDLE);
       return;
@@ -202,7 +201,7 @@ export class PurifierAccessory {
   }
 
   getTargetPurifierState(callback): void {
-    if (this.status.auto) {
+    if (this.status.state == Purifier.State.Auto) {
       Logger.log(this.metadata.nickname, 'Target purifier state is auto');
       callback(null, Hap.Characteristic.TargetAirPurifierState.AUTO);
     } else {
@@ -225,7 +224,7 @@ export class PurifierAccessory {
 
   getRotationSpeed(callback) {
     let intervals = {1: 20, 2: 50, 3: 100};
-    let fanSpeed = intervals[this.status.fanSpeed];
+    let fanSpeed = intervals[this.status.fan];
 
     Logger.log(this.metadata.nickname, `Rotation speed is ${fanSpeed}`);
     callback(null, fanSpeed);

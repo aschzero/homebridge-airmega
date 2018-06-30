@@ -1,10 +1,10 @@
-import { Log } from './definitions/HAP';
+import { HAP } from './types';
 
 class HALogger {
-  public  log: Log;
+  public  log: HAP.Log;
   private debugMode: boolean;
 
-  setLogger(log: Log, debugMode: boolean): void {
+  setLogger(log: HAP.Log, debugMode: boolean): void {
     this.log = log;
     this.debugMode = debugMode;
   }
