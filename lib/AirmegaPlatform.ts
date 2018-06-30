@@ -1,4 +1,3 @@
-import { Communicator } from './api/Communicator';
 import { Authenticator } from './api/Authenticator';
 import { AccessoryConfig } from './definitions/AccessoryConfig';
 import { Accessory, Log } from './definitions/HAP';
@@ -7,6 +6,7 @@ import { PurifierMetadata } from './definitions/Purifier';
 import { Logger } from './HALogger';
 import { Hap } from './HAP';
 import { PurifierAccessory } from './PurifierAccessory';
+import { PurifierCommunicator } from './api/PurifierCommunicator';
 
 export class AirmegaPlatform {
   platform: Platform;
@@ -41,14 +41,18 @@ export class AirmegaPlatform {
 
   async setup(username: string, password: string): Promise<void> {
     let authenticator = new Authenticator();
-    let communicator = new Communicator();
+    let communicator = new PurifierCommunicator();
+
+    Logger.log('Authenticating...');
 
     let state = await authenticator.getStateId();
     await authenticator.authenticate(username, password, state);
 
+    Logger.log('Getting purifiers...');
+
     let purifiers = await communicator.getPurifiers();
     purifiers.forEach(purifier => {
-      Logger.log(`Found ${purifier.nickname}`);
+      Logger.log(`Found '${purifier.nickname}'`);
       this.addAccessory(purifier);
     });
   }

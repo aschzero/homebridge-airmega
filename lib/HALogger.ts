@@ -14,7 +14,7 @@ class HALogger {
 
     let result = message;
     if (data) {
-      result += ` :: ${JSON.stringify(data)}`
+      result += `: ${JSON.stringify(data)}`
     }
 
     this.log(result);

@@ -16,8 +16,15 @@ export namespace Config {
     export const COWAY_REFRESH_TOKEN = 'coway_refresh_token';
   }
 
-  export namespace Codes {
+  export namespace Endpoints {
     export const DEVICE_LIST = 'CWIL0100';
     export const STATUS = 'CWIG0602';
+    export const CONTROL = 'CWIG0603';
+  }
+
+  export namespace Codes {
+    export const POWER = '0001';
+    export const MODE = '0002';
+    export const FAN = '0003';
   }
 }

@@ -1,19 +1,15 @@
 import * as request from 'request-promise';
 import * as store from 'store';
 
+import { AuthenticatePayload, OAuthPayload } from '../definitions/api/Payload';
 import { Logger } from '../HALogger';
-import { Communicator } from './Communicator';
 import { Config } from './Config';
 
 export class Authenticator {
-  communicator: Communicator;
 
-  constructor() {
-    this.communicator = new Communicator();
-  }
   async authenticate(username: string, password: string, state: string): Promise<void> {
     try {
-      let payload = this.communicator.buildAuthenticatePayload(username, password, state);
+      let payload = this.buildAuthenticatePayload(username, password, state);
       let response = await request(payload);
 
       this.storeTokens(response.headers['set-cookie']);
@@ -24,7 +20,7 @@ export class Authenticator {
 
   async getStateId(): Promise<string> {
     try {
-      let payload = this.communicator.buildOauthPayload();
+      let payload = this.buildOauthPayload();
 
       let response = await request(payload);
       let query = response.request.uri.query;
@@ -60,5 +56,47 @@ export class Authenticator {
     } catch(e) {
       Logger.log(`Unable to retrieve ${key}: ${e}`);
     }
+  }
+
+  private buildOauthPayload(): OAuthPayload {
+    let options: OAuthPayload = {
+      uri: Config.Auth.OAUTH_URL,
+      method: 'GET',
+      resolveWithFullResponse: true,
+      headers: {
+        'User-Agent': Config.USER_AGENT
+      },
+      qs: {
+        auth_type: 0,
+        response_type: 'code',
+        client_id: Config.Auth.CLIENT_ID,
+        scope: 'login',
+        lang: 'en_US',
+        redirect_url: Config.Auth.REDIRECT_URL
+      }
+    }
+
+    return options;
+  }
+
+  private buildAuthenticatePayload(username: string, password: string, state: string): AuthenticatePayload {
+    let options: AuthenticatePayload = {
+      uri: Config.Auth.SIGNIN_URL,
+      headers: {
+        'Content-Type': Config.ContentType.JSON,
+        'User-Agent': Config.USER_AGENT
+      },
+      method: 'POST',
+      json: true,
+      resolveWithFullResponse: true,
+      body: {
+        'username': username,
+        'password': password,
+        'state': state,
+        'auto_login': 'Y'
+      }
+    }
+
+    return options;
   }
 }
