@@ -2,7 +2,7 @@ import * as request from 'request-promise';
 import * as store from 'store';
 
 import { Message, MessageHeader } from '../definitions/api/Message';
-import { Payload, AuthenticatePayload, OAuthPayload } from '../definitions/api/Payload';
+import { AuthenticatePayload, OAuthPayload, Payload } from '../definitions/api/Payload';
 import { PurifierMetadata, PurifierStatus } from '../definitions/Purifier';
 import { Store } from '../definitions/Store';
 import { Logger } from '../HALogger';
@@ -11,7 +11,7 @@ import { Config } from './Config';
 export class Communicator {
 
   async getPurifiers(): Promise<PurifierMetadata[]> {
-    let payload: Payload = this.buildPayload(Config.Codes.DEVICE_LIST)
+    let payload: Payload = this.buildPayload(Config.Codes.DEVICE_LIST, null);
 
     try {
       let response = await request(payload);
@@ -28,8 +28,8 @@ export class Communicator {
     }
   }
 
-  async getStatus(): Promise<PurifierStatus> {
-    let payload: Payload = this.buildPayload(Config.Codes.STATUS)
+  async getStatus(deviceId: string): Promise<PurifierStatus> {
+    let payload: Payload = this.buildPayload(Config.Codes.STATUS, deviceId)
     let response = await request(payload);
     let statusResponse = response.body.controlStatus;
 
@@ -40,11 +40,14 @@ export class Communicator {
       auto: (statusResponse['0002'] == '1'),
     }
 
+    Logger.debug('Status response', statusResponse)
+    Logger.debug('Status object', status);
+
     return status;
   }
 
-  buildPayload(code: string, options?: any): Payload {
-    let message: Message = this.buildMessage(code);
+  buildPayload(code: string, deviceId: string, options?: any): Payload {
+    let message: Message = this.buildMessage(code, deviceId);
     let encodedMessage = `message=${encodeURIComponent(JSON.stringify(message))}`;
 
     let defaultOptions = {
@@ -61,7 +64,7 @@ export class Communicator {
     return {...defaultOptions, ...options} as Payload;
   }
 
-  buildMessage(code: string): Message {
+  buildMessage(code: string, deviceId: string): Message {
     let tokens: Store = store.get('tokens');
 
     let header: MessageHeader = {
@@ -72,7 +75,9 @@ export class Communicator {
 
     let formData: Message = {
       header: header,
-      body: {}
+      body: {
+        barcode: deviceId
+      }
     }
 
     return formData;
@@ -83,7 +88,6 @@ export class Communicator {
       uri: Config.Auth.OAUTH_URL,
       method: 'GET',
       resolveWithFullResponse: true,
-      // followRedirect: false,
       headers: {
         'User-Agent': Config.USER_AGENT
       },

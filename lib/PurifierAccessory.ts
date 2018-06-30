@@ -1,9 +1,12 @@
+import { Communicator } from './api/Communicator';
+import { Accessory, Service } from './definitions/HAP';
+import { PurifierMetadata, PurifierStatus } from './definitions/Purifier';
 import { Logger } from './HALogger';
 import { Hap } from './HAP';
-import { Accessory, Service } from './definitions/HAP';
-import { PurifierMetadata } from './definitions/Purifier';
 
 export class PurifierAccessory {
+  communicator: Communicator;
+  status: PurifierStatus;
   metadata: PurifierMetadata;
   accessory: Accessory;
   purifierService: Service;
@@ -11,6 +14,7 @@ export class PurifierAccessory {
   constructor(accessory: Accessory, metadata: PurifierMetadata) {
     this.metadata = metadata;
     this.accessory = accessory;
+    this.communicator = new Communicator();
 
     this.setupAccessoryInformationServiceCharacteristics();
     this.setupPurifierServiceCharacteristics();
@@ -18,7 +22,16 @@ export class PurifierAccessory {
     // this.setupFilterMaintenanceServiceCharacteristics();
     // this.setupLightbulbServiceCharacteristics();
 
+    this.updateStatus();
     this.accessory.updateReachability(true);
+  }
+
+  async updateStatus() {
+    try {
+      this.status = await this.communicator.getStatus(this.metadata.barcode);
+    } catch(e) {
+      Logger.log(`Unable to update purifier status: ${e}`);
+    }
   }
 
   getOrCreatePurifierService(): Service {
@@ -134,27 +147,23 @@ export class PurifierAccessory {
   // }
 
   getActive(callback): void {
-    // if (!this.purifier.status) return;
-
-    // if (this.purifier.status.power) {
-    //   Logger.log(this.metadata.nickname, 'is active');
+    if (this.status.on) {
+      Logger.log(this.metadata.nickname, 'is active');
       callback(null, Hap.Characteristic.Active.ACTIVE);
-    // } else {
-    //   Logger.log(this.metadata.nickname, 'is inactive');
-    //   callback(null, Hap.Characteristic.Active.INACTIVE);
-    // }
+    } else {
+      Logger.log(this.metadata.nickname, 'is inactive');
+      callback(null, Hap.Characteristic.Active.INACTIVE);
+    }
   }
 
   setActiveCharacteristic(targetState, callback) {
-    // if (!this.purifier.status) return;
-
-    // // Only toggle power when new state is different.
-    // // Prevents extraneous calls especially when changing
-    // // the fan speed (setRotationSpeed ensures device is on).
-    // if (this.purifier.status.power == targetState) {
-    //   callback(null);
-    //   return;
-    // }
+    // Only toggle power when new state is different.
+    // Prevents extraneous calls especially when changing
+    // the fan speed (setRotationSpeed ensures device is on).
+    if (this.status.on == targetState) {
+      callback(null);
+      return;
+    }
 
     // this.purifier.togglePower(targetState).then(() => {
     //   Logger.log(this.metadata.nickname, `Turning ${targetState ? 'on' : 'off'}`);
@@ -175,34 +184,31 @@ export class PurifierAccessory {
   }
 
   getCurrentAirPurifierState(callback): void {
-    // if (!this.purifier.properties) return;
-    // this.purifier.getLatestData();
+    this.updateStatus();
 
-    // if (!this.purifier.properties.power) {
-    //   callback(null, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
-    //   return;
-    // }
+    if (!this.status.on) {
+      callback(null, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
+      return;
+    }
 
-    // if (this.purifier.properties.fanSpeed == 0 || this.purifier.properties.mode == 2 || this.purifier.properties.mode == 6) {
-    //   Logger.log('Current state is idle');
-    //   callback(null, Hap.Characteristic.CurrentAirPurifierState.IDLE);
-    //   return;
-    // }
+    if (this.status.fanSpeed == 0) {
+      Logger.log(this.metadata.nickname, 'Current state is idle');
+      callback(null, Hap.Characteristic.CurrentAirPurifierState.IDLE);
+      return;
+    }
 
-    Logger.log('Current state is purifying');
+    Logger.log(this.metadata.nickname, 'Current state is purifying');
     callback(null, Hap.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
   }
 
   getTargetPurifierState(callback): void {
-    // if (!this.purifier.properties) return;
-
-    // if (this.purifier.properties.mode == 0) {
-    //   Logger.log('Target purifier state is manual');
-    //   callback(null, Hap.Characteristic.TargetAirPurifierState.MANUAL);
-    // } else {
-    //   Logger.log('Target purifier state is auto');
+    if (this.status.auto) {
+      Logger.log(this.metadata.nickname, 'Target purifier state is auto');
       callback(null, Hap.Characteristic.TargetAirPurifierState.AUTO);
-    // }
+    } else {
+      Logger.log(this.metadata.nickname, 'Target purifier state is manual');
+      callback(null, Hap.Characteristic.TargetAirPurifierState.MANUAL);
+    }
   }
 
   setTargetPurifierState(targetState, callback): void {
@@ -225,12 +231,11 @@ export class PurifierAccessory {
   }
 
   getRotationSpeed(callback) {
-    // let intervals = {1: 20, 2: 50, 3: 100};
-    // let fanSpeed = intervals[this.purifier.properties.fanSpeed];
+    let intervals = {1: 20, 2: 50, 3: 100};
+    let fanSpeed = intervals[this.status.fanSpeed];
 
-    // Logger.log(`Rotation speed is ${fanSpeed}`);
-    // callback(null, fanSpeed);
-    callback(null, 100);
+    Logger.log(this.metadata.nickname, `Rotation speed is ${fanSpeed}`);
+    callback(null, fanSpeed);
   }
 
   setRotationSpeed(targetState, callback) {

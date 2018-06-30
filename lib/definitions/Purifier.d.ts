@@ -10,11 +10,8 @@ export interface FilterProperties {
 }
 
 export interface PurifierStatus {
-  power: boolean;
+  on: boolean;
+  lightOn: boolean;
   fanSpeed: number;
-  mode: number;
-  mood: number;
-  dustPollutionLev: number;
-  filter1ExchAlarm: boolean;
-  filter2ExchAlarm: boolean;
+  auto: boolean;
 }

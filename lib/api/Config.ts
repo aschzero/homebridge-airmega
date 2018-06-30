@@ -18,5 +18,6 @@ export namespace Config {
 
   export namespace Codes {
     export const DEVICE_LIST = 'CWIL0100';
+    export const STATUS = 'CWIG0602';
   }
 }
