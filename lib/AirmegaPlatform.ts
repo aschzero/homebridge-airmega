@@ -1,5 +1,5 @@
-import { Authenticator } from './api/Authenticator';
-import { PurifierCommunicator } from './api/PurifierCommunicator';
+import { Authenticator } from './Authenticator';
+import { PurifierCommunicator } from './PurifierCommunicator';
 import { HAP, Purifier } from './types';
 import { Logger } from './HALogger';
 import { Hap } from './HAP';

@@ -1,4 +1,4 @@
-import { PurifierCommunicator } from './api/PurifierCommunicator';
+import { PurifierCommunicator } from './PurifierCommunicator';
 import { Logger } from './HALogger';
 import { Hap } from './HAP';
 import { Purifier, HAP } from './types';

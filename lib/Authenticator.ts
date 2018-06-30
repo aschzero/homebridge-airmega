@@ -1,8 +1,8 @@
 import * as request from 'request-promise';
 import * as store from 'store';
 
-import { Request } from '../types';
-import { Logger } from '../HALogger';
+import { Request } from './types';
+import { Logger } from './HALogger';
 import { Config } from './Config';
 
 export class Authenticator {
