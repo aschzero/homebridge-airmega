@@ -9,10 +9,15 @@ class HALogger {
     this.debugMode = debugMode;
   }
 
-  debug(message: string): void {
+  debug(message: string, data?: any): void {
     if (!this.debugMode) return;
 
-    this.log(message);
+    let result = message;
+    if (data) {
+      result += ` :: ${JSON.stringify(data)}`
+    }
+
+    this.log(result);
   }
 }
 

@@ -43,7 +43,7 @@ export class Authenticator {
       refreshToken: refreshToken
     }
 
-    Logger.debug(`Storing tokens: ${JSON.stringify(storeData)}`);
+    Logger.debug('Storing tokens', storeData);
 
     store.set('tokens', storeData);
   }
