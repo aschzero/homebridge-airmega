@@ -185,7 +185,7 @@ export class PurifierAccessory {
   getCurrentAirPurifierState(callback): void {
     this.updateStatus();
 
-    if (!(this.status.power == Purifier.Power.Off)) {
+    if (this.status.power == Purifier.Power.Off) {
       callback(null, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
       return;
     }
