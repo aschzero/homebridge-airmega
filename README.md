@@ -6,8 +6,7 @@ Control and monitor your Airmega purifier with HomeKit integration.
 
 * Working installation of [Homebridge](https://github.com/nfarina/homebridge)
 * iOS 11 or later
-* Airmega 400S/300S connected to WiFi
-    * Only the 400S has been tested but the 300S should also work fine.
+* Airmega 400S or 300S connected to WiFi and setup in the IOCare app
 
 ## Installation
 
@@ -30,7 +29,7 @@ Example homebridge configuration file:
   "platforms": [
     {
       "platform": "Airmega",
-      "email": "my@email.com",
+      "username": "myusername",
       "password": "password123"
     }
   ]
@@ -39,10 +38,9 @@ Example homebridge configuration file:
 
 The plugin will discover all connected purifiers when homebridge is restarted.
 
-### Required Fields
-* **platform** - Set to "Airmega"
-* **email** - The email you use to log into the Airmega app
-* **password** - The password you use to log into the Airmega app
+### Authentication
+
+The IOCare app offers two main options for logging in: "Phone Number/Email" or "Coway ID". The username and password you supply in the config has been tested to work with either one. This plugin currently does not support authentication through social networks.
 
 ## Functionality
 
