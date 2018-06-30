@@ -246,7 +246,6 @@ export class PurifierAccessory {
     Logger.log(`Setting rotation speed to ${targetSpeed}`);
 
     this.communicator.setFanSpeed(targetSpeed).then(() => {
-      this.purifierService.setCharacteristic(Hap.Characteristic.TargetAirPurifierState, Hap.Characteristic.TargetAirPurifierState.MANUAL);
       callback(null);
     }).catch((err) => {
       callback(err);
