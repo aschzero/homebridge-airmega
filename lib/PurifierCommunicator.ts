@@ -1,9 +1,9 @@
 import * as request from 'request-promise';
 import * as store from 'store';
 
-import { Purifier, Request } from './types';
-import { Logger } from './HALogger';
 import { Config } from './Config';
+import { Logger } from './HALogger';
+import { Purifier, Request } from './types';
 
 export class PurifierCommunicator {
   deviceId: string;

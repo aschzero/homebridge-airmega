@@ -1,7 +1,7 @@
-import { PurifierCommunicator } from './PurifierCommunicator';
 import { Logger } from './HALogger';
 import { Hap } from './HAP';
-import { Purifier, HAP } from './types';
+import { PurifierCommunicator } from './PurifierCommunicator';
+import { HAP, Purifier } from './types';
 
 export class PurifierAccessory {
   communicator: PurifierCommunicator;
