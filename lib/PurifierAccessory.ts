@@ -22,7 +22,7 @@ export class PurifierAccessory {
     this.setupPurifierServiceCharacteristics();
     this.setupAirQualityServiceCharacteristics();
     this.setupFilterMaintenanceServiceCharacteristics();
-    // this.setupLightbulbServiceCharacteristics();
+    this.setupLightbulbServiceCharacteristics();
 
     this.updateStatus();
     this.accessory.updateReachability(true);
@@ -148,13 +148,13 @@ export class PurifierAccessory {
     .on('get', this.getPreFilterLifeLevel.bind(this));
   }
 
-  // setupLightbulbServiceCharacteristics(): void {
-  //   let lightbulbService = this.getOrCreateLightbulbService();
+  setupLightbulbServiceCharacteristics(): void {
+    let lightbulbService = this.getOrCreateLightbulbService();
 
-  //   lightbulbService.getCharacteristic(Hap.Characteristic.On)
-  //     .on('get', this.getLightIndicator.bind(this))
-  //     .on('set', this.setLightIndicator.bind(this));
-  // }
+    lightbulbService.getCharacteristic(Hap.Characteristic.On)
+      .on('get', this.getLightIndicator.bind(this))
+      .on('set', this.setLightIndicator.bind(this));
+  }
 
   getActive(callback): void {
     if (this.status.power == Purifier.Power.On) {
@@ -307,25 +307,17 @@ export class PurifierAccessory {
     callback(null, result);
   }
 
-  // getLightIndicator(callback): void {
-  //   if (!this.purifier.properties) return;
+  getLightIndicator(callback): void {
+    callback(null, this.status.light == Purifier.Light.On);
+  }
 
-  //   this.purifier.getLatestData().then(() => {
-  //     let isOn: boolean = (this.purifier.properties.mood == 2);
+  setLightIndicator(targetState, callback): void {
+    Logger.log(this.metadata.nickname, `Turning light ${(targetState ? 'on' : 'off')}`);
 
-  //     callback(null, isOn);
-  //   }).catch((err) => {
-  //     callback(err);
-  //   });
-  // }
-
-  // setLightIndicator(targetState, callback): void {
-  //   Logger.log(`Turning light ${(targetState ? 'on' : 'off')}`);
-
-  //   this.purifier.toggleLight(targetState).then(() => {
-  //     callback(null);
-  //   }).catch((err) => {
-  //     callback(err);
-  //   });
-  // }
+    this.communicator.setLight(targetState).then(() => {
+      callback(null);
+    }).catch((err) => {
+      callback(err);
+    });
+  }
 }

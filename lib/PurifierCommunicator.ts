@@ -100,6 +100,17 @@ export class PurifierCommunicator {
     }
   }
 
+  async setLight(on: boolean): Promise<void> {
+    let value = on ? '2' : '0';
+    let payload = this.buildControlPayload(Config.Codes.LIGHT, value);
+
+    try {
+      await this.sendRequest(payload);
+    } catch(e) {
+      Logger.log(`Unable to set light: ${e}`);
+    }
+  }
+
   private async sendRequest(payload: Request.Payload) {
     Logger.debug('Sending payload', payload);
 

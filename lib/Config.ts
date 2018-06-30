@@ -27,6 +27,7 @@ export namespace Config {
     export const POWER = '0001';
     export const MODE = '0002';
     export const FAN = '0003';
+    export const LIGHT = '0007';
   }
 
   export namespace Accessory {
