@@ -8,9 +8,10 @@ export namespace Config {
   }
 
   export namespace Auth {
-    export const URI = 'https://idp.coway.com/user/signin/';
-    export const STATE = '5632dfa4-dddf-45ef-a487-437f53f7a70d';
-    export const AUTO_LOGIN = 'Y';
+    export const OAUTH_URL = 'https://idp.coway.com/oauth2/v1/authorize'
+    export const SIGNIN_URL = 'https://idp.coway.com/user/signin/';
+    export const REDIRECT_URL = 'https://iocareapp.coway.com/bizmob.iocare/redirect/redirect.html';
+    export const CLIENT_ID = 'UmVuZXdhbCBBcHA';
     export const COWAY_ACCESS_TOKEN = 'coway_access_token';
     export const COWAY_REFRESH_TOKEN = 'coway_refresh_token';
   }

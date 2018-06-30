@@ -31,8 +31,7 @@ export class AirmegaPlatform {
         }
 
         try {
-          Logger.log('Authenticating...');
-          this.retrievePurifiers(username, password);
+          this.setup(username, password);
         } catch(e) {
           Logger.log(`Unable to retrieve purifiers: ${e}`);
         }
@@ -40,11 +39,12 @@ export class AirmegaPlatform {
     }
   }
 
-  async retrievePurifiers(username: string, password: string) {
+  async setup(username: string, password: string): Promise<void> {
     let authenticator = new Authenticator();
     let communicator = new Communicator();
 
-    await authenticator.authenticate(username, password);
+    let state = await authenticator.getStateId();
+    await authenticator.authenticate(username, password, state);
 
     let purifiers = await communicator.getPurifiers();
     purifiers.forEach(purifier => {

@@ -3,13 +3,29 @@ export interface Payload {
   method: string
   headers: any
   json: boolean
-}
-
-export interface FormPayload extends Payload {
   form: string
 }
 
-export interface AuthenticatorPayload extends Payload {
+export interface OAuthPayload {
+  uri: string
+  method: string
+  headers: any
+  qs: any
   resolveWithFullResponse: boolean
-  body: any
+}
+
+export interface AuthenticatePayload {
+  uri: string
+  method: string
+  headers: any
+  json: boolean
+  resolveWithFullResponse: boolean
+  body: AuthenticateBodyPayload
+}
+
+export interface AuthenticateBodyPayload {
+  username: string
+  password: string
+  state: string
+  auto_login: string
 }

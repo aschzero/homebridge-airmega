@@ -2,8 +2,8 @@ import * as request from 'request-promise';
 import * as store from 'store';
 
 import { Message, MessageHeader } from '../definitions/api/Message';
-import { AuthenticatorPayload, FormPayload } from '../definitions/api/Payload';
-import { PurifierMetadata } from '../definitions/Purifier';
+import { Payload, AuthenticatePayload, OAuthPayload } from '../definitions/api/Payload';
+import { PurifierMetadata, PurifierStatus } from '../definitions/Purifier';
 import { Store } from '../definitions/Store';
 import { Logger } from '../HALogger';
 import { Config } from './Config';
@@ -11,7 +11,7 @@ import { Config } from './Config';
 export class Communicator {
 
   async getPurifiers(): Promise<PurifierMetadata[]> {
-    let payload: FormPayload = this.buildPayload(Config.Codes.DEVICE_LIST)
+    let payload: Payload = this.buildPayload(Config.Codes.DEVICE_LIST)
 
     try {
       let response = await request(payload);
@@ -28,28 +28,22 @@ export class Communicator {
     }
   }
 
-  buildAuthenticatorPayload(username: string, password: string): AuthenticatorPayload {
-    let options: AuthenticatorPayload = {
-      uri: Config.Auth.URI,
-      headers: {
-        'Content-Type': Config.ContentType.JSON,
-        'User-Agent': Config.USER_AGENT
-      },
-      method: 'POST',
-      json: true,
-      resolveWithFullResponse: true,
-      body: {
-        'username': username,
-        'password': password,
-        'state': Config.Auth.STATE,
-        'auto_login': Config.Auth.AUTO_LOGIN
-      }
+  async getStatus(): Promise<PurifierStatus> {
+    let payload: Payload = this.buildPayload(Config.Codes.STATUS)
+    let response = await request(payload);
+    let statusResponse = response.body.controlStatus;
+
+    let status: PurifierStatus = {
+      on: (statusResponse['0001'] == '1'),
+      lightOn: (statusResponse['0007'] == '2'),
+      fanSpeed: statusResponse['0003'],
+      auto: (statusResponse['0002'] == '1'),
     }
 
-    return options;
+    return status;
   }
 
-  buildPayload(code: string, options?: any): FormPayload {
+  buildPayload(code: string, options?: any): Payload {
     let message: Message = this.buildMessage(code);
     let encodedMessage = `message=${encodeURIComponent(JSON.stringify(message))}`;
 
@@ -64,7 +58,7 @@ export class Communicator {
       form: encodedMessage
     }
 
-    return {...defaultOptions, ...options} as FormPayload;
+    return {...defaultOptions, ...options} as Payload;
   }
 
   buildMessage(code: string): Message {
@@ -82,5 +76,48 @@ export class Communicator {
     }
 
     return formData;
+  }
+
+  buildOauthPayload(): OAuthPayload {
+    let options: OAuthPayload = {
+      uri: Config.Auth.OAUTH_URL,
+      method: 'GET',
+      resolveWithFullResponse: true,
+      // followRedirect: false,
+      headers: {
+        'User-Agent': Config.USER_AGENT
+      },
+      qs: {
+        auth_type: 0,
+        response_type: 'code',
+        client_id: Config.Auth.CLIENT_ID,
+        scope: 'login',
+        lang: 'en_US',
+        redirect_url: Config.Auth.REDIRECT_URL
+      }
+    }
+
+    return options;
+  }
+
+  buildAuthenticatePayload(username: string, password: string, state: string): AuthenticatePayload {
+    let options: AuthenticatePayload = {
+      uri: Config.Auth.SIGNIN_URL,
+      headers: {
+        'Content-Type': Config.ContentType.JSON,
+        'User-Agent': Config.USER_AGENT
+      },
+      method: 'POST',
+      json: true,
+      resolveWithFullResponse: true,
+      body: {
+        'username': username,
+        'password': password,
+        'state': state,
+        'auto_login': 'Y'
+      }
+    }
+
+    return options;
   }
 }
