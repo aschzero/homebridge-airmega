@@ -15,7 +15,7 @@ export class AirmegaPlatform {
   log: Log;
 
   constructor(log: Log, config: AccessoryConfig, platform: Platform) {
-    Logger.setLogger(log);
+    Logger.setLogger(log, config['debug']);
 
     this.platform = platform;
     this.accessories = [];
