@@ -30,7 +30,7 @@ export namespace Config {
     export const LIGHT = '0007';
   }
 
-  export namespace Accessory {
+  export namespace Filters {
     export const PRE_FILTER = 'Pre Filter';
     export const MAIN_FILTER = 'Max2 Filter';
   }

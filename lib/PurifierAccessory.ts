@@ -18,6 +18,24 @@ export class PurifierAccessory {
     this.accessory = accessory;
     this.communicator = new PurifierCommunicator(this.metadata.barcode);
 
+    this.status = {
+      power: Purifier.Power.Off,
+      light: Purifier.Light.Off,
+      fan: Purifier.Fan.Low,
+      state: Purifier.State.Sleep,
+      airQuality: Purifier.AirQuality.Excellent
+    }
+
+    this.preFilterStatus = {
+      name: Config.Filters.PRE_FILTER,
+      lifeLevel: 100
+    }
+
+    this.mainFilterStatus = {
+      name: Config.Filters.MAIN_FILTER,
+      lifeLevel: 100
+    }
+
     this.setupAccessoryInformationServiceCharacteristics();
     this.setupPurifierServiceCharacteristics();
     this.setupAirQualityServiceCharacteristics();
@@ -34,10 +52,10 @@ export class PurifierAccessory {
 
       let filterStatus = await this.communicator.getFilterStatus();
       this.preFilterStatus = filterStatus.find(filter => {
-        return filter.name == Config.Accessory.PRE_FILTER;
+        return filter.name == Config.Filters.PRE_FILTER;
       });
       this.mainFilterStatus = filterStatus.find(filter => {
-        return filter.name == Config.Accessory.MAIN_FILTER;
+        return filter.name == Config.Filters.MAIN_FILTER;
       });
     } catch(e) {
       Logger.log(`Unable to update purifier status: ${e}`);
@@ -182,8 +200,10 @@ export class PurifierAccessory {
       // otherwise accessory hangs on 'Turning on...'/'Turning off...'
       if (targetState) {
         this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
+        this.status.power = Purifier.Power.On;
       } else {
         this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
+        this.status.power = Purifier.Power.Off;
       }
 
       callback(null);
@@ -222,11 +242,15 @@ export class PurifierAccessory {
   }
 
   setTargetPurifierState(targetState, callback): void {
-    let auto = targetState;
+    if (targetState) {
+      this.status.state = Purifier.State.Auto;
+      Logger.log(this.metadata.nickname, 'Mode set to auto');
+    } else {
+      this.status.state = Purifier.State.Manual;
+      Logger.log(this.metadata.nickname, 'Mode set to manual');
+    }
 
-    Logger.log(this.metadata.nickname, `Setting mode to ${auto ? 'auto' : 'manual'}`);
-
-    this.communicator.setMode(auto).then(() => {
+    this.communicator.setMode(targetState).then(() => {
       callback(null);
     }).catch((err) => {
       callback(err);
@@ -243,7 +267,10 @@ export class PurifierAccessory {
 
   setRotationSpeed(targetState, callback) {
     let targetSpeed;
-    let ranges = {1: [0, 40], 2: [40, 70], 3: [70, 100]};
+    let ranges = {};
+    ranges[Purifier.Fan.Low] = [0, 40];
+    ranges[Purifier.Fan.Medium] = [40, 70];
+    ranges[Purifier.Fan.High] = [70, 100];
 
     for (var key in ranges) {
       var currentSpeed = ranges[key];
@@ -254,9 +281,8 @@ export class PurifierAccessory {
       }
     }
 
-    Logger.log(`Setting rotation speed to ${targetSpeed}`);
-
     this.communicator.setFanSpeed(targetSpeed).then(() => {
+      this.status.fan = targetSpeed;
       callback(null);
     }).catch((err) => {
       callback(err);
