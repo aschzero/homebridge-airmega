@@ -2,6 +2,8 @@
 
 Control and monitor your Airmega purifier with HomeKit integration.
 
+⚠️ **Please note**: this version of the plugin does not currently work due to a sudden switch-over to new APIs and a new app (IOCare). A [new version](https://github.com/aschzero/homebridge-airmega/tree/2.1.0) of the plugin is under development and should be released soon. In the meantime, you can install and try out the latest beta with `npm install -g homebridge-airmega@beta`.
+
 ## Prerequisites
 
 * Working installation of [Homebridge](https://github.com/nfarina/homebridge)
