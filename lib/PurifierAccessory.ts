@@ -159,7 +159,7 @@ export class PurifierAccessory {
     // Only toggle power when new state is different.
     // Prevents extraneous calls especially when changing
     // the fan speed (setRotationSpeed ensures device is on).
-    if (this.status.power == targetState) {
+    if (Number(this.status.power) == targetState) {
       callback(null);
       return;
     }
