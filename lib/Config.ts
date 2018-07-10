@@ -12,8 +12,10 @@ export namespace Config {
     export const SIGNIN_URL = 'https://idp.coway.com/user/signin/';
     export const REDIRECT_URL = 'https://iocareapp.coway.com/bizmob.iocare/redirect/redirect.html';
     export const CLIENT_ID = 'UmVuZXdhbCBBcHA';
+    export const SERVICE_CODE = 'com.coway.IOCareKor';
     export const COWAY_ACCESS_TOKEN = 'coway_access_token';
     export const COWAY_REFRESH_TOKEN = 'coway_refresh_token';
+    export const TOKEN_EXP = 3600000;
   }
 
   export namespace Endpoints {

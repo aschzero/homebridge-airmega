@@ -42,16 +42,23 @@ export class AirmegaPlatform {
 
     Logger.log('Authenticating...');
 
-    let state = await authenticator.getStateId();
-    await authenticator.authenticate(username, password, state);
+    try {
+      await authenticator.login(username, password);
+    } catch(e) {
+      Logger.log(`Unable to login: ${e}`);
+    }
 
     Logger.log('Getting purifiers...');
 
-    let purifiers = await communicator.getPurifiers();
-    purifiers.forEach(purifier => {
-      Logger.log(`Found '${purifier.nickname}'`);
-      this.addAccessory(purifier);
-    });
+    try {
+      let purifiers = await communicator.getPurifiers();
+      purifiers.forEach(purifier => {
+        Logger.log(`Found '${purifier.nickname}'`);
+        this.addAccessory(purifier);
+      });
+    } catch(e) {
+      Logger.log(`Unable to retrieve purifiers: ${e}`);
+    }
   }
 
   configureAccessory(accessory: HAP.Accessory): void {

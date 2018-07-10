@@ -35,6 +35,12 @@ export namespace HAP {
   }
 }
 
+export interface TokenStore {
+  accessToken: string
+  refreshToken: string
+  storedAt: number
+}
+
 export namespace Request {
   export interface MessageHeader {
     trcode: string

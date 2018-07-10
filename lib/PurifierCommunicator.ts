@@ -1,33 +1,27 @@
-import * as request from 'request-promise';
-import * as store from 'store';
-
+import { Communicator } from './Communicator';
 import { Config } from './Config';
 import { Logger } from './HALogger';
 import { Purifier, Request } from './types';
 
-export class PurifierCommunicator {
+export class PurifierCommunicator extends Communicator {
   deviceId: string;
 
   constructor(deviceId?: string) {
+    super();
     this.deviceId = deviceId;
   }
 
   async getPurifiers(): Promise<Purifier.Metadata[]> {
-    let payload: Request.Payload = this.buildPayload(Config.Endpoints.DEVICE_LIST);
+    let payload: Request.Payload = this.buildPurifierListPayload();
+    let response = await this.sendRequest(payload);
+    let purifiers: Purifier.Metadata[] = response.body.deviceInfos.map(device => {
+      return {
+        nickname: device.dvcNick,
+        barcode: device.barcode
+      } as Purifier.Metadata;
+    });
 
-    try {
-      let response = await this.sendRequest(payload);
-      let purifiers: Purifier.Metadata[] = response.body.deviceInfos.map(device => {
-        return {
-          nickname: device.dvcNick,
-          barcode: device.barcode
-        } as Purifier.Metadata;
-      });
-
-      return purifiers;
-    } catch(e) {
-      Logger.log(`Unable to retrieve purifiers: ${e}`);
-    }
+    return purifiers;
   }
 
   async getStatus(): Promise<Purifier.Status> {
@@ -111,56 +105,27 @@ export class PurifierCommunicator {
     }
   }
 
-  private async sendRequest(payload: Request.Payload) {
-    Logger.debug('Sending payload', payload);
-
-    let response = await request(payload);
-    Logger.debug('Response', response);
-
-    return response;
-  }
-
-  private buildPayload(endpoint: string): Request.Payload {
-    let tokens = store.get('tokens');
-
-    let header: Request.MessageHeader = {
-      trcode: endpoint,
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken
-    }
+  private buildPurifierListPayload(): Request.Payload {
+    let endpoint = Config.Endpoints.DEVICE_LIST;
+    let messageHeader: Request.MessageHeader = this.buildMessageHeader(endpoint);
 
     let message: Request.Message = {
-      header: header,
+      header: messageHeader,
       body: {
         barcode: this.deviceId
       }
     }
 
-    let payload: Request.Payload = {
-      uri: `${Config.BASE_URI}/${endpoint}.json`,
-      headers: {
-        'Content-Type': Config.ContentType.FORM,
-        'User-Agent': Config.USER_AGENT
-      },
-      method: 'POST',
-      json: true,
-      form: `message=${encodeURIComponent(JSON.stringify(message))}`
-    }
+    let payload = this.buildPayload(endpoint, message);
 
     return payload;
   }
 
   private buildStatusPayload(endpoint: string): Request.Payload {
-    let tokens = store.get('tokens');
-
-    let header: Request.MessageHeader = {
-      trcode: endpoint,
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken
-    }
+    let messageHeader: Request.MessageHeader = this.buildMessageHeader(endpoint);
 
     let message: Request.Message = {
-      header: header,
+      header: messageHeader,
       body: {
         barcode: this.deviceId,
         dvcBrandCd: 'MG',
@@ -171,31 +136,17 @@ export class PurifierCommunicator {
       }
     }
 
-    let payload: Request.Payload = {
-      uri: `${Config.BASE_URI}/${endpoint}.json`,
-      headers: {
-        'Content-Type': Config.ContentType.FORM,
-        'User-Agent': Config.USER_AGENT
-      },
-      method: 'POST',
-      json: true,
-      form: `message=${encodeURIComponent(JSON.stringify(message))}`
-    }
+    let payload = this.buildPayload(endpoint, message);
 
     return payload;
   }
 
   private buildControlPayload(code: string, value: string): Request.Payload {
-    let tokens = store.get('tokens');
-
-    let header: Request.MessageHeader = {
-      trcode: Config.Endpoints.CONTROL,
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken
-    }
+    let endpoint = Config.Endpoints.CONTROL;
+    let messageHeader: Request.MessageHeader = this.buildMessageHeader(endpoint);
 
     let message: Request.Message = {
-      header: header,
+      header: messageHeader,
       body: {
         barcode: this.deviceId,
         funcList: [{
@@ -205,16 +156,7 @@ export class PurifierCommunicator {
       }
     }
 
-    let payload: Request.Payload = {
-      uri: `${Config.BASE_URI}/${Config.Endpoints.CONTROL}.json`,
-      headers: {
-        'Content-Type': Config.ContentType.FORM,
-        'User-Agent': Config.USER_AGENT
-      },
-      method: 'POST',
-      json: true,
-      form: `message=${encodeURIComponent(JSON.stringify(message))}`
-    }
+    let payload = this.buildPayload(endpoint, message);
 
     return payload;
   }
