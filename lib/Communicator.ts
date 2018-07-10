@@ -1,30 +1,21 @@
 import * as request from 'request-promise';
-import * as store from 'store';
 
+import { Authenticator } from './Authenticator';
 import { Config } from './Config';
 import { Logger } from './HALogger';
-import { Request, TokenStore } from './types';
-import { Authenticator } from './Authenticator';
+import { TokenStore } from './TokenStore';
+import { Request, Tokens } from './types';
 
 export class Communicator {
   authenticator: Authenticator;
+  tokenStore: TokenStore;
 
   constructor() {
     this.authenticator = new Authenticator();
+    this.tokenStore = new TokenStore();
   }
 
   async sendRequest(payload: Request.Payload) {
-    if (this.authenticator.tokenExpired()) {
-      Logger.log('Tokens expired, refreshing...');
-
-      try {
-        await this.authenticator.authenticate();
-        Logger.log('Successfully refreshed tokens');
-      } catch(e) {
-        Logger.log(`Unable to reauthenticate: ${e}`)
-      }
-    }
-
     Logger.debug('Sending payload', payload);
 
     let response = await request(payload);
@@ -33,8 +24,8 @@ export class Communicator {
     return response;
   }
 
-  buildMessageHeader(endpoint: string): Request.MessageHeader {
-    let tokens: TokenStore = store.get('tokens');
+  async buildMessageHeader(endpoint: string): Promise<Request.MessageHeader> {
+    let tokens: Tokens = await this.tokenStore.getTokens();
 
     let header: Request.MessageHeader = {
       trcode: endpoint,

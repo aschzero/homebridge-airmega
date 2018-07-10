@@ -35,7 +35,7 @@ export namespace HAP {
   }
 }
 
-export interface TokenStore {
+export interface Tokens {
   accessToken: string
   refreshToken: string
   storedAt: number

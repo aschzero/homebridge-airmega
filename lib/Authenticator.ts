@@ -3,8 +3,8 @@ import * as store from 'store';
 
 import { Config } from './Config';
 import { Logger } from './HALogger';
-import { Request, TokenStore } from './types';
-import { Communicator } from './Communicator';
+import { TokenStore } from './TokenStore';
+import { Request } from './types';
 
 export class Authenticator {
 
@@ -22,7 +22,7 @@ export class Authenticator {
     let payload = this.buildAuthenticatePayload(stateId);
     let response = await request(payload);
 
-    this.storeTokens(response.headers['set-cookie']);
+    this.storeTokensFromCookie(response.headers['set-cookie']);
   }
 
   async getStateId(): Promise<string> {
@@ -34,26 +34,17 @@ export class Authenticator {
     return query.split('state=').slice(-1)[0];
   }
 
-  tokenExpired(): boolean {
-    let tokens: TokenStore = store.get('tokens');
-    let now = Date.now();
-
-    return (now - tokens.storedAt) >= Config.Auth.TOKEN_EXP;
-  }
-
-  private storeTokens(cookies: string[]): void {
+  private storeTokensFromCookie(cookies: string[]): void {
+    let tokenStore = new TokenStore();
     let accessToken = this.findToken(cookies, Config.Auth.COWAY_ACCESS_TOKEN);
     let refreshToken = this.findToken(cookies, Config.Auth.COWAY_REFRESH_TOKEN);
 
-    let storeData = {
+    let tokens = {
       accessToken: accessToken,
-      refreshToken: refreshToken,
-      storedAt: Date.now()
+      refreshToken: refreshToken
     }
 
-    Logger.debug('Storing tokens', storeData);
-
-    store.set('tokens', storeData);
+    tokenStore.setTokens(tokens);
   }
 
   private findToken(cookies: string[], key: string): string {

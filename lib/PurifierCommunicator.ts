@@ -12,7 +12,7 @@ export class PurifierCommunicator extends Communicator {
   }
 
   async getPurifiers(): Promise<Purifier.Metadata[]> {
-    let payload: Request.Payload = this.buildPurifierListPayload();
+    let payload: Request.Payload = await this.buildPurifierListPayload();
     let response = await this.sendRequest(payload);
     let purifiers: Purifier.Metadata[] = response.body.deviceInfos.map(device => {
       return {
@@ -25,7 +25,7 @@ export class PurifierCommunicator extends Communicator {
   }
 
   async getStatus(): Promise<Purifier.Status> {
-    let payload: Request.Payload = this.buildStatusPayload(Config.Endpoints.STATUS);
+    let payload: Request.Payload = await this.buildStatusPayload(Config.Endpoints.STATUS);
     let response = await this.sendRequest(payload);
 
     let statusResponse = response.body.prodStatus[0];
@@ -44,7 +44,7 @@ export class PurifierCommunicator extends Communicator {
   }
 
   async getFilterStatus(): Promise<Purifier.FilterStatus[]> {
-    let payload: Request.Payload = this.buildStatusPayload(Config.Endpoints.FILTERS);
+    let payload: Request.Payload = await this.buildStatusPayload(Config.Endpoints.FILTERS);
     let response = await this.sendRequest(payload);
 
     let filterStatuses = response.body.filterList.map(filter => {
@@ -63,7 +63,7 @@ export class PurifierCommunicator extends Communicator {
 
   async setPower(on: boolean): Promise<void> {
     let value = on ? '1' : '0';
-    let payload = this.buildControlPayload(Config.Codes.POWER, value);
+    let payload = await this.buildControlPayload(Config.Codes.POWER, value);
 
     try {
       await this.sendRequest(payload);
@@ -74,7 +74,7 @@ export class PurifierCommunicator extends Communicator {
 
   async setMode(auto: boolean): Promise<void> {
     let value = auto ? '1' : '2';
-    let payload = this.buildControlPayload(Config.Codes.MODE, value);
+    let payload = await this.buildControlPayload(Config.Codes.MODE, value);
 
     try {
       await this.sendRequest(payload);
@@ -85,7 +85,7 @@ export class PurifierCommunicator extends Communicator {
 
   async setFanSpeed(speed: number): Promise<void> {
     let value = speed.toString();
-    let payload = this.buildControlPayload(Config.Codes.FAN, value);
+    let payload = await this.buildControlPayload(Config.Codes.FAN, value);
 
     try {
       await this.sendRequest(payload);
@@ -96,7 +96,7 @@ export class PurifierCommunicator extends Communicator {
 
   async setLight(on: boolean): Promise<void> {
     let value = on ? '2' : '0';
-    let payload = this.buildControlPayload(Config.Codes.LIGHT, value);
+    let payload = await this.buildControlPayload(Config.Codes.LIGHT, value);
 
     try {
       await this.sendRequest(payload);
@@ -105,9 +105,9 @@ export class PurifierCommunicator extends Communicator {
     }
   }
 
-  private buildPurifierListPayload(): Request.Payload {
+  private async buildPurifierListPayload(): Promise<Request.Payload> {
     let endpoint = Config.Endpoints.DEVICE_LIST;
-    let messageHeader: Request.MessageHeader = this.buildMessageHeader(endpoint);
+    let messageHeader: Request.MessageHeader = await this.buildMessageHeader(endpoint);
 
     let message: Request.Message = {
       header: messageHeader,
@@ -121,8 +121,8 @@ export class PurifierCommunicator extends Communicator {
     return payload;
   }
 
-  private buildStatusPayload(endpoint: string): Request.Payload {
-    let messageHeader: Request.MessageHeader = this.buildMessageHeader(endpoint);
+  private async buildStatusPayload(endpoint: string): Promise<Request.Payload> {
+    let messageHeader: Request.MessageHeader = await this.buildMessageHeader(endpoint);
 
     let message: Request.Message = {
       header: messageHeader,
@@ -141,9 +141,9 @@ export class PurifierCommunicator extends Communicator {
     return payload;
   }
 
-  private buildControlPayload(code: string, value: string): Request.Payload {
+  private async buildControlPayload(code: string, value: string): Promise<Request.Payload> {
     let endpoint = Config.Endpoints.CONTROL;
-    let messageHeader: Request.MessageHeader = this.buildMessageHeader(endpoint);
+    let messageHeader: Request.MessageHeader = await this.buildMessageHeader(endpoint);
 
     let message: Request.Message = {
       header: messageHeader,
