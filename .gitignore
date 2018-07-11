@@ -1,3 +1,5 @@
-node_modules/*
-.vscode/*
-.devbridge/*
+.vscode
+.devbridge
+node_modules
+dist
+package-lock.json

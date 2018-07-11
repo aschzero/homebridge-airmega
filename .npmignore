@@ -1,0 +1,5 @@
+index.ts
+lib/**/*.ts
+tsconfig.json
+.devbridge
+.vscode

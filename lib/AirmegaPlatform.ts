@@ -1,60 +1,83 @@
-import { Platform } from './interfaces/Platform';
-import { Logger } from './Logger';
-import { AccessoryConfig } from './interfaces/AccessoryConfig';
-import { Authenticator } from './APIAuthenticator';
+import { Authenticator } from './Authenticator';
+import { Logger } from './HALogger';
 import { Hap } from './HAP';
-import { Accessory, Log } from './interfaces/HAP';
-import { PurifierProperties, PurifierMetadataProperties } from './interfaces/Purifier';
 import { PurifierAccessory } from './PurifierAccessory';
+import { PurifierCommunicator } from './PurifierCommunicator';
+import { HAP, Purifier } from './types';
 
 export class AirmegaPlatform {
-  platform: Platform;
-  accessories: Array<Accessory>;
-  registeredAccessories: Map<string, Accessory>;
-  log: Log;
+  platform: HAP.Platform;
+  accessories: Array<HAP.Accessory>;
+  registeredAccessories: Map<string, HAP.Accessory>;
+  log: HAP.Log;
 
-  constructor(log: Log, config: AccessoryConfig, platform: Platform) {
-    Logger.setLog(log);
+  constructor(log: HAP.Log, config: HAP.AccessoryConfig, platform: HAP.Platform) {
+    Logger.setLogger(log, config['debug']);
 
     this.platform = platform;
     this.accessories = [];
-    this.registeredAccessories = new Map<string, Accessory>();
+    this.registeredAccessories = new Map<string, HAP.Accessory>();
 
     if (this.platform) {
       this.platform.on('didFinishLaunching', () => {
-        let email = config['email'];
+        let username = config['username'];
         let password = config['password'];
 
-        if (!email || !password) {
-          throw Error('email and password fields are required in config');
+        if (!username || !password) {
+          throw Error('username and password fields are required in config');
         }
 
-        Authenticator.authenticate(email, password, this.log).then((purifiers) => {
-          purifiers.forEach(purifier => this.addAccessory(purifier));
-        }).catch(err => {
-          Logger.log(`Encountered an error when trying to get user token: ${err}`);
-        });
+        try {
+          this.setup(username, password);
+        } catch(e) {
+          Logger.log(`Unable to retrieve purifiers: ${e}`);
+        }
       });
     }
   }
 
-  configureAccessory(accessory: Accessory): void {
+  async setup(username: string, password: string): Promise<void> {
+    let authenticator = new Authenticator();
+    let communicator = new PurifierCommunicator();
+
+    Logger.log('Authenticating...');
+
+    try {
+      await authenticator.login(username, password);
+    } catch(e) {
+      Logger.log(`Unable to login: ${e}`);
+    }
+
+    Logger.log('Getting purifiers...');
+
+    try {
+      let purifiers = await communicator.getPurifiers();
+      purifiers.forEach(purifier => {
+        Logger.log(`Found '${purifier.nickname}'`);
+        this.addAccessory(purifier);
+      });
+    } catch(e) {
+      Logger.log(`Unable to retrieve purifiers: ${e}`);
+    }
+  }
+
+  configureAccessory(accessory: HAP.Accessory): void {
     accessory.updateReachability(false);
 
     this.registeredAccessories.set(accessory.UUID, accessory);
   }
 
-  addAccessory(properties: PurifierMetadataProperties): void {
-    let uuid: string = Hap.UUIDGen.generate(properties.aliasName);
-    let accessory: Accessory;
+  addAccessory(purifier: Purifier.Metadata): void {
+    let uuid: string = Hap.UUIDGen.generate(purifier.nickname);
+    let accessory: HAP.Accessory;
 
     if (this.registeredAccessories.get(uuid)) {
       accessory = this.registeredAccessories.get(uuid);
     } else {
-      accessory = new Hap.Accessory(properties.aliasName, uuid);
+      accessory = new Hap.Accessory(purifier.nickname, uuid);
     }
 
-    let purifierAccessory = new PurifierAccessory(accessory, properties);
+    new PurifierAccessory(accessory, purifier);
 
     accessory.on('identify', (paired, callback) => {
       callback();
