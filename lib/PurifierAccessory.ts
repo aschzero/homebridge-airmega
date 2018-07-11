@@ -176,10 +176,8 @@ export class PurifierAccessory {
 
   getActive(callback): void {
     if (this.status.power == Purifier.Power.On) {
-      Logger.log(this.metadata.nickname, 'is active');
       callback(null, Hap.Characteristic.Active.ACTIVE);
     } else {
-      Logger.log(this.metadata.nickname, 'is inactive');
       callback(null, Hap.Characteristic.Active.INACTIVE);
     }
   }
@@ -222,21 +220,17 @@ export class PurifierAccessory {
     }
 
     if (this.status.state == Purifier.State.Sleep || this.status.state == Purifier.State.AutoSleep) {
-      Logger.log(this.metadata.nickname, 'Current state is idle');
       callback(null, Hap.Characteristic.CurrentAirPurifierState.IDLE);
       return;
     }
 
-    Logger.log(this.metadata.nickname, 'Current state is purifying');
     callback(null, Hap.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
   }
 
   getTargetPurifierState(callback): void {
     if (this.status.state == Purifier.State.Auto) {
-      Logger.log(this.metadata.nickname, 'Target purifier state is auto');
       callback(null, Hap.Characteristic.TargetAirPurifierState.AUTO);
     } else {
-      Logger.log(this.metadata.nickname, 'Target purifier state is manual');
       callback(null, Hap.Characteristic.TargetAirPurifierState.MANUAL);
     }
   }
@@ -261,7 +255,6 @@ export class PurifierAccessory {
     let intervals = {1: 20, 2: 50, 3: 100};
     let fanSpeed = intervals[this.status.fan];
 
-    Logger.log(this.metadata.nickname, `Rotation speed is ${fanSpeed}`);
     callback(null, fanSpeed);
   }
 
