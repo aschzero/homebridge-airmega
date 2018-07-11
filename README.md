@@ -2,7 +2,15 @@
 
 Control and monitor your Airmega purifier with HomeKit integration.
 
-⚠️ **Please note**: this version of the plugin does not currently work due to a sudden switch-over to new APIs and a new app (IOCare). A [new version](https://github.com/aschzero/homebridge-airmega/tree/2.1.0) of the plugin is under development and should be released soon. In the meantime, you can install and try out the latest beta with `npm install -g homebridge-airmega@beta`.
+[![npm version](http://img.shields.io/npm/v/homebridge-airmega.svg)](https://npmjs.org/package/homebridge-airmega)
+[![npm version](http://img.shields.io/npm/dt/homebridge-airmega.svg)](https://npmjs.org/package/homebridge-airmega)
+
+## Functionality
+
+* Control power, fan speed, and lights
+* Toggle between manual and auto mode
+* Shows the current air quality
+* Shows the life levels of all filters (only visible in the Elgato Eve app)
 
 ## Prerequisites
 
@@ -43,15 +51,6 @@ The plugin will discover all connected purifiers when homebridge is restarted.
 ### Authentication
 
 The IOCare app offers two main options for logging in: "Phone Number/Email" or "Coway ID". The username and password you supply in the config has been tested to work with either one. This plugin currently does not support authentication through social networks.
-
-## Functionality
-
-* Turn on/off
-* Fan speed adjustment
-* Toggle between manual and auto mode
-* Reports air quality
-* Reports change indication and life levels of both filters (only visible in the Elgato Eve app)
-* Includes a light accessory to control the lights on the purifier
 
 ## Tested Siri Commands
 
