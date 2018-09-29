@@ -4,7 +4,8 @@
     "target": "es6",
     "module": "commonjs",
     "outDir": "dist",
-    "sourceMap": true
+    "sourceMap": true,
+    "allowJs": true
   },
   "files": [
     "index.ts"

@@ -5,6 +5,7 @@ import { Config } from './Config';
 import { Logger } from './HALogger';
 import { TokenStore } from './TokenStore';
 import { Request } from './types';
+import { AesUtil, CryptoJS } from './util/aes';
 
 export class Authenticator {
 
@@ -85,6 +86,10 @@ export class Authenticator {
   private buildAuthenticatePayload(state: string): Request.AuthenticatePayload {
     let credentials = store.get('credentials');
 
+    let iv = CryptoJS.lib.WordArray.random(16);
+    let key = CryptoJS.lib.WordArray.random(16);
+    let password = AesUtil.encrypt(iv, credentials.password, key);
+
     let options: Request.AuthenticatePayload = {
       uri: Config.Auth.SIGNIN_URL,
       headers: {
@@ -96,7 +101,7 @@ export class Authenticator {
       resolveWithFullResponse: true,
       body: {
         'username': credentials.username,
-        'password': credentials.password,
+        'password': password.toString(),
         'state': state,
         'auto_login': 'Y'
       }

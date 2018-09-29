@@ -22,7 +22,8 @@
 	},
 	"scripts": {
 		"build": "tsc",
-		"prepublishOnly": "tsc -p . --outDir dist"
+		"prepublishOnly": "tsc -p . --outDir dist",
+		"debug": "node --inspect-brk $(which homebridge) -D -U $(pwd)/.homebridge"
 	},
 	"repository": {
 		"type": "git",

@@ -1,7 +1,6 @@
 import * as store from 'store';
 
 import { Authenticator } from './Authenticator';
-import { Config } from './Config';
 import { Logger } from './HALogger';
 import { Tokens } from './types';
 

@@ -46,6 +46,7 @@ export class AirmegaPlatform {
       await authenticator.login(username, password);
     } catch(e) {
       Logger.log(`Unable to login: ${e}`);
+      return;
     }
 
     Logger.log('Getting purifiers...');
