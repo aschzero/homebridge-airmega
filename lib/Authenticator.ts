@@ -2,9 +2,9 @@ import * as request from 'request-promise';
 
 import { Client } from './Client';
 import { Config } from './Config';
-import { PurifierResponse, Request, Tokens } from './types';
-import { AesUtil, CryptoJS } from './util/aes';
 import { Purifier } from './Purifier';
+import { Request, TokenPair } from './types';
+import { AesUtil, CryptoJS } from './util/aes';
 
 export class Authenticator extends Client {
   result: any;
@@ -16,7 +16,7 @@ export class Authenticator extends Client {
 
     this.result = await this.getAccountStatus(authCode);
 
-    this.tokenStore.setTokens({
+    this.tokenStore.saveTokens({
       accessToken: this.result.header.accessToken,
       refreshToken: this.result.header.refreshToken,
     });
@@ -30,7 +30,7 @@ export class Authenticator extends Client {
     return purifiers;
   }
 
-  async refreshTokens(oldTokens: Tokens): Promise<Tokens> {
+  async refreshTokens(oldTokens: TokenPair): Promise<TokenPair> {
     let message = this.buildAccountPayloadMessage();
 
     message.header.accessToken = oldTokens.accessToken;

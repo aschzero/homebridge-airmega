@@ -1,6 +1,3 @@
-import { Client } from './Client';
-import { Config } from './Config';
-import { Logger } from './Logger';
 import { PurifierResponse } from './types';
 
 export class Purifier {

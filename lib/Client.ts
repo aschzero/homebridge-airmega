@@ -3,7 +3,7 @@ import * as request from 'request-promise';
 import { Config } from './Config';
 import { Logger } from './Logger';
 import { TokenStore } from './TokenStore';
-import { Request, Tokens, PurifierResponse } from './types';
+import { Request, TokenPair, PurifierResponse } from './types';
 
 export class Client {
   tokenStore: TokenStore;
@@ -25,8 +25,6 @@ export class Client {
       state: statusResponse.prodMode,
       airQuality: statusResponse.dustPollution
     }
-
-    Logger.debug('Status', status);
 
     return status;
   }
@@ -143,7 +141,7 @@ export class Client {
   }
 
   async buildMessageHeader(endpoint: string): Promise<Request.MessageHeader> {
-    let tokens: Tokens = await this.tokenStore.getTokens();
+    let tokens = await this.tokenStore.getTokens();
 
     let header: Request.MessageHeader = {
       trcode: endpoint,
