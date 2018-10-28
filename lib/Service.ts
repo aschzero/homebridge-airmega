@@ -2,13 +2,15 @@ import { Client } from './Client';
 import { Purifier } from './Purifier';
 import { HAP, PurifierResponse } from './types';
 import { Logger } from './Logger';
+import { Deferred } from './Deferred';
+import { ServiceFactory } from './ServiceFactory';
 
 export class Service {
   purifier: Purifier;
   accessory: HAP.Accessory;
   client: Client;
 
-  statusUpdateHandler: Promise<PurifierResponse.Status>;
+  deferredStatus: Deferred<PurifierResponse.Status>;
 
   constructor(purifier: Purifier, accessory: HAP.Accessory) {
     this.client = new Client();
@@ -17,16 +19,18 @@ export class Service {
     this.accessory = accessory;
   }
 
-  async waitForStatusUpdate(): Promise<PurifierResponse.Status> {
-    let status = await this.statusUpdateHandler;
-
-    return status;
-  }
-
   async updateStatus() {
+    ServiceFactory.services.forEach(service => {
+      service.deferredStatus = new Deferred<PurifierResponse.Status>();
+    });
+
     try {
       let status = await this.client.getStatus(this.purifier.id);
       this.purifier.setStatus(status);
+
+      ServiceFactory.services.forEach(s => {
+        s.deferredStatus.resolve(status);
+      });
 
       return status;
     } catch(e) {

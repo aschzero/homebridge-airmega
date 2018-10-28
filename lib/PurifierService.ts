@@ -2,7 +2,6 @@ import { Hap } from './HAP';
 import { Logger } from './Logger';
 import { Service } from './Service';
 import { HAP, PurifierResponse } from './types';
-import { LightService } from './LightService';
 
 export class PurifierService extends Service {
   purifierService: HAP.Service;
@@ -40,7 +39,7 @@ export class PurifierService extends Service {
 
   async getActiveState(callback): Promise<void> {
     try {
-      let status = await this.waitForStatusUpdate();
+      let status = await this.deferredStatus;
 
       if (status.power == PurifierResponse.Power.On) {
         callback(null, Hap.Characteristic.Active.ACTIVE);
@@ -88,7 +87,7 @@ export class PurifierService extends Service {
 
   async getCurrentAirPurifierState(callback): Promise<void> {
     try {
-      let status = await this.waitForStatusUpdate();
+      let status = await this.deferredStatus;
 
       if (status.power == PurifierResponse.Power.Off) {
         callback(null, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
@@ -141,7 +140,7 @@ export class PurifierService extends Service {
 
   async getRotationSpeed(callback): Promise<void> {
     try {
-      let status = await this.waitForStatusUpdate();
+      let status = await this.deferredStatus;
 
       let intervals = {1: 20, 2: 50, 3: 100};
       let fanSpeed = intervals[status.fan];

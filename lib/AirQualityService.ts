@@ -18,7 +18,7 @@ export class AirQualityService extends Service {
   }
 
   async getAirQuality(callback): Promise<void> {
-    let status = await this.waitForStatusUpdate();
+    let status = await this.deferredStatus;
     let result;
 
     switch (status.airQuality) {
