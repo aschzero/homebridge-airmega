@@ -1,10 +1,7 @@
-import { Client } from './Client';
 import { Hap } from './HAP';
 import { Logger } from './Logger';
-import { Purifier } from './Purifier';
 import { Service } from './Service';
 import { HAP, PurifierResponse } from './types';
-
 
 export class LightService extends Service {
 

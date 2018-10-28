@@ -3,7 +3,7 @@ import * as request from 'request-promise';
 import { Config } from './Config';
 import { Logger } from './Logger';
 import { TokenStore } from './TokenStore';
-import { Request, TokenPair, PurifierResponse } from './types';
+import { PurifierResponse, Request } from './types';
 
 export class Client {
   tokenStore: TokenStore;
