@@ -2,18 +2,11 @@ import { Client } from './Client';
 import { Hap } from './HAP';
 import { Logger } from './Logger';
 import { Purifier } from './Purifier';
+import { Service } from './Service';
 import { HAP, PurifierResponse } from './types';
 
-export class LightService {
-  client: Client;
-  purifier: Purifier;
-  accessory: HAP.Accessory;
 
-  constructor(purifier: Purifier, accessory: HAP.Accessory) {
-    this.purifier = purifier;
-    this.accessory = accessory;
-    this.client = new Client();
-  }
+export class LightService extends Service {
 
   registerServices(): void {
     let lightService = this.getOrCreateLightbulbService();

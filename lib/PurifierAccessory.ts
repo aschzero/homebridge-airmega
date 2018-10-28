@@ -20,30 +20,23 @@ export class PurifierAccessory {
     this.accessory = accessory;
     this.client = new Client();
 
-    this.setupAccessoryInformationServiceCharacteristics();
-    this.setupPurifierServiceCharacteristics();
-
-    let airQualityService = new AirQualityService(this.purifier, this.accessory);
-    let filterService = new FilterService(this.purifier, this.accessory);
-    let lightService = new LightService(this.purifier, this.accessory);
-
-    airQualityService.registerServices();
-    filterService.registerServices();
-    lightService.registerServices();
+    this.setupAccessoryInformationService();
+    this.setupPurifierService();
+    this.setupCompanionServices();
 
     this.accessory.updateReachability(true);
 
     Logger.log(`Created accessory for '${this.purifier.name}'`);
   }
 
-  setupAccessoryInformationServiceCharacteristics(): void {
+  setupAccessoryInformationService(): void {
     this.accessory.getService(Hap.Service.AccessoryInformation)
       .setCharacteristic(Hap.Characteristic.Manufacturer, 'Coway')
       .setCharacteristic(Hap.Characteristic.Model, 'Airmega')
       .setCharacteristic(Hap.Characteristic.SerialNumber, this.purifier.id);
   }
 
-  setupPurifierServiceCharacteristics(): void {
+  setupPurifierService(): void {
     this.purifierService = this.getOrCreatePurifierService();
 
     this.purifierService.getCharacteristic(Hap.Characteristic.Active)
@@ -60,6 +53,16 @@ export class PurifierAccessory {
     this.purifierService.getCharacteristic(Hap.Characteristic.RotationSpeed)
       .on('get', this.getRotationSpeed.bind(this))
       .on('set', this.setRotationSpeed.bind(this));
+  }
+
+  setupCompanionServices(): void {
+    let airQualityService = new AirQualityService(this.purifier, this.accessory);
+    let filterService = new FilterService(this.purifier, this.accessory);
+    let lightService = new LightService(this.purifier, this.accessory);
+
+    airQualityService.registerServices();
+    filterService.registerServices();
+    lightService.registerServices();
   }
 
   getOrCreatePurifierService(): HAP.Service {

@@ -1,24 +1,12 @@
-import { Client } from './Client';
-import { Hap } from './HAP';
-import { Purifier } from './Purifier';
-import { HAP, PurifierResponse } from './types';
-import { Logger } from './Logger';
 import { Config } from './Config';
+import { Hap } from './HAP';
+import { Logger } from './Logger';
+import { Service } from './Service';
+import { HAP, PurifierResponse } from './types';
 
-
-export class FilterService {
-  client: Client;
-  purifier: Purifier;
-  accessory: HAP.Accessory;
-
+export class FilterService extends Service {
   preFilterStatus: PurifierResponse.FilterStatus;
   mainFilterStatus: PurifierResponse.FilterStatus;
-
-  constructor(purifier: Purifier, accessory: HAP.Accessory) {
-    this.purifier = purifier;
-    this.accessory = accessory;
-    this.client = new Client();
-  }
 
   registerServices(): void {
     this.getOrCreateMainFilterService();

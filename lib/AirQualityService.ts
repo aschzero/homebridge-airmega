@@ -1,18 +1,8 @@
-import { Client } from './Client';
 import { Hap } from './HAP';
-import { Purifier } from './Purifier';
+import { Service } from './Service';
 import { HAP, PurifierResponse } from './types';
 
-export class AirQualityService {
-  client: Client;
-  purifier: Purifier;
-  accessory: HAP.Accessory;
-
-  constructor(purifier: Purifier, accessory: HAP.Accessory) {
-    this.purifier = purifier;
-    this.accessory = accessory;
-    this.client = new Client();
-  }
+export class AirQualityService extends Service {
 
   registerServices(): HAP.Service {
     let airQualityService = this.accessory.getService(Hap.Service.AirQualitySensor);
