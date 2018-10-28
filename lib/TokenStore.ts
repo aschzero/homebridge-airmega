@@ -32,6 +32,8 @@ export class TokenStore {
 
       Logger.log('Token refresh succeeded!');
       Logger.debug('New tokens', newTokens); // remove
+
+      return newTokens;
     } catch(e) {
       Logger.error('Unable to refresh tokens', e);
     }
