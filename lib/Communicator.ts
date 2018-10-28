@@ -15,7 +15,7 @@ export class Communicator {
   async sendRequest(payload: Request.Payload) {
     Logger.debug('Sending payload', payload);
 
-    let response = await request(payload);
+    let response = await request.post(payload);
     Logger.debug('Response', response);
 
     return response;

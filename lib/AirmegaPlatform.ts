@@ -77,7 +77,7 @@ export class AirmegaPlatform {
       accessory = new Hap.Accessory(purifier.nickname, uuid);
     }
 
-    // new PurifierAccessory(accessory, purifier);
+    new PurifierAccessory(accessory, purifier);
 
     accessory.on('identify', (paired, callback) => {
       callback();
