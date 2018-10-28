@@ -14,8 +14,8 @@ export class Client {
 
   async getStatus(id: string): Promise<PurifierResponse.Status> {
     let payload: Request.Payload = await this.buildStatusPayload(id, Config.Endpoints.STATUS);
-    let response = await this.sendRequest(payload);
 
+    let response = await this.sendRequest(payload);
     let statusResponse = response.body.prodStatus[0];
 
     let status: PurifierResponse.Status = {
