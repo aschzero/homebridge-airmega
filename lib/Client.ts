@@ -5,7 +5,7 @@ import { Logger } from './HALogger';
 import { TokenStore } from './TokenStore';
 import { Request, Tokens } from './types';
 
-export class Communicator {
+export class Client {
   tokenStore: TokenStore;
 
   constructor() {

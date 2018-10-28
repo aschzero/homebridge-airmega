@@ -1,12 +1,11 @@
 import * as request from 'request-promise';
 
-import { Communicator } from './Communicator';
+import { Client } from './Client';
 import { Config } from './Config';
-import { Logger } from './HALogger';
 import { Purifier, Request } from './types';
 import { AesUtil, CryptoJS } from './util/aes';
 
-export class Authenticator extends Communicator {
+export class Authenticator extends Client {
   stateIdRegex: RegExp;
   authCodeRegex: RegExp;
   result: any;

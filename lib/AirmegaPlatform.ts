@@ -2,7 +2,7 @@ import { Authenticator } from './Authenticator';
 import { Logger } from './HALogger';
 import { Hap } from './HAP';
 import { PurifierAccessory } from './PurifierAccessory';
-import { PurifierCommunicator } from './PurifierCommunicator';
+import { PurifierClient } from './PurifierClient';
 import { HAP, Purifier } from './types';
 
 export class AirmegaPlatform {

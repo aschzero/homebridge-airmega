@@ -1,11 +1,11 @@
 import { Config } from './Config';
 import { Logger } from './HALogger';
 import { Hap } from './HAP';
-import { PurifierCommunicator } from './PurifierCommunicator';
+import { PurifierClient } from './PurifierClient';
 import { HAP, Purifier } from './types';
 
 export class PurifierAccessory {
-  communicator: PurifierCommunicator;
+  client: PurifierClient;
   metadata: Purifier.Metadata;
   accessory: HAP.Accessory;
   purifierService: HAP.Service;
@@ -16,7 +16,7 @@ export class PurifierAccessory {
   constructor(accessory: HAP.Accessory, metadata: Purifier.Metadata) {
     this.metadata = metadata;
     this.accessory = accessory;
-    this.communicator = new PurifierCommunicator(this.metadata.barcode);
+    this.client = new PurifierClient(this.metadata.barcode);
 
     this.status = {
       power: Purifier.Power.Off,
@@ -48,9 +48,9 @@ export class PurifierAccessory {
 
   async updateStatus() {
     try {
-      this.status = await this.communicator.getStatus();
+      this.status = await this.client.getStatus();
 
-      let filterStatus = await this.communicator.getFilterStatus();
+      let filterStatus = await this.client.getFilterStatus();
       this.preFilterStatus = filterStatus.find(filter => {
         return filter.name == Config.Filters.PRE_FILTER;
       });
@@ -191,7 +191,7 @@ export class PurifierAccessory {
       return;
     }
 
-    this.communicator.setPower(targetState).then(() => {
+    this.client.setPower(targetState).then(() => {
       Logger.log(this.metadata.nickname, `Turning ${targetState ? 'on' : 'off'}`);
 
       // Need to set the current purifier state characteristic here
@@ -244,7 +244,7 @@ export class PurifierAccessory {
       Logger.log(this.metadata.nickname, 'Mode set to manual');
     }
 
-    this.communicator.setMode(targetState).then(() => {
+    this.client.setMode(targetState).then(() => {
       callback(null);
     }).catch((err) => {
       callback(err);
@@ -274,7 +274,7 @@ export class PurifierAccessory {
       }
     }
 
-    this.communicator.setFanSpeed(targetSpeed).then(() => {
+    this.client.setFanSpeed(targetSpeed).then(() => {
       this.status.fan = targetSpeed;
       callback(null);
     }).catch((err) => {
@@ -333,7 +333,7 @@ export class PurifierAccessory {
   setLightIndicator(targetState, callback): void {
     Logger.log(this.metadata.nickname, `Turning light ${(targetState ? 'on' : 'off')}`);
 
-    this.communicator.setLight(targetState).then(() => {
+    this.client.setLight(targetState).then(() => {
       callback(null);
     }).catch((err) => {
       callback(err);

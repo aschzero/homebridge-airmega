@@ -1,9 +1,9 @@
-import { Communicator } from './Communicator';
+import { Client } from './Client';
 import { Config } from './Config';
 import { Logger } from './HALogger';
 import { Purifier, Request } from './types';
 
-export class PurifierCommunicator extends Communicator {
+export class PurifierClient extends Client {
   deviceId: string;
 
   constructor(deviceId?: string) {
