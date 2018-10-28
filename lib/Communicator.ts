@@ -1,17 +1,14 @@
 import * as request from 'request-promise';
 
-import { Authenticator } from './Authenticator';
 import { Config } from './Config';
 import { Logger } from './HALogger';
 import { TokenStore } from './TokenStore';
 import { Request, Tokens } from './types';
 
 export class Communicator {
-  authenticator: Authenticator;
   tokenStore: TokenStore;
 
   constructor() {
-    this.authenticator = new Authenticator();
     this.tokenStore = new TokenStore();
   }
 
@@ -40,10 +37,10 @@ export class Communicator {
     let payload: Request.Payload = {
       uri: `${Config.BASE_URI}/${endpoint}.json`,
       headers: {
+        'User-Agent': Config.USER_AGENT,
         'Content-Type': Config.ContentType.FORM,
-        'User-Agent': Config.USER_AGENT
+        Accept: 'application/json'
       },
-      method: 'POST',
       json: true,
       form: `message=${encodeURIComponent(JSON.stringify(message))}`
     }

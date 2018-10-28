@@ -11,19 +11,6 @@ export class PurifierCommunicator extends Communicator {
     this.deviceId = deviceId;
   }
 
-  async getPurifiers(): Promise<Purifier.Metadata[]> {
-    let payload: Request.Payload = await this.buildPurifierListPayload();
-    let response = await this.sendRequest(payload);
-    let purifiers: Purifier.Metadata[] = response.body.deviceInfos.map(device => {
-      return {
-        nickname: device.dvcNick,
-        barcode: device.barcode
-      } as Purifier.Metadata;
-    });
-
-    return purifiers;
-  }
-
   async getStatus(): Promise<Purifier.Status> {
     let payload: Request.Payload = await this.buildStatusPayload(Config.Endpoints.STATUS);
     let response = await this.sendRequest(payload);

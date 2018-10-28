@@ -55,7 +55,6 @@ export namespace Request {
 
   export interface Payload {
     uri: string
-    method: string
     headers: any
     json: boolean
     form: string

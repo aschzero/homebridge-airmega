@@ -38,7 +38,6 @@ export class AirmegaPlatform {
 
   async setup(username: string, password: string): Promise<void> {
     let authenticator = new Authenticator();
-    let communicator = new PurifierCommunicator();
 
     Logger.log('Authenticating...');
 
@@ -49,16 +48,16 @@ export class AirmegaPlatform {
       return;
     }
 
-    Logger.log('Getting purifiers...');
+    Logger.log('Retrieving purifiers...');
 
     try {
-      let purifiers = await communicator.getPurifiers();
-      purifiers.forEach(purifier => {
-        Logger.log(`Found '${purifier.nickname}'`);
+      authenticator.getPurifiers().forEach(purifier => {
         this.addAccessory(purifier);
+        Logger.log(`Created accessory for '${purifier.nickname}'`);
       });
     } catch(e) {
       Logger.log(`Unable to retrieve purifiers: ${e}`);
+      return;
     }
   }
 
@@ -78,7 +77,7 @@ export class AirmegaPlatform {
       accessory = new Hap.Accessory(purifier.nickname, uuid);
     }
 
-    new PurifierAccessory(accessory, purifier);
+    // new PurifierAccessory(accessory, purifier);
 
     accessory.on('identify', (paired, callback) => {
       callback();
