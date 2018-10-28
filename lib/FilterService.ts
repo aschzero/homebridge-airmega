@@ -9,6 +9,8 @@ export class FilterService extends Service {
   mainFilterStatus: PurifierResponse.FilterStatus;
 
   registerServices(): void {
+    this.updateFilterStatus();
+
     this.getOrCreateMainFilterService();
     this.getOrCreatePreFilterService();
 
@@ -49,8 +51,7 @@ export class FilterService extends Service {
     return filterService;
   }
 
-  async getPreFilterChangeIndication(callback) {
-    // MOVE THIS
+  async updateFilterStatus() {
     try {
       let filterStatus = await this.client.getFilterStatus(this.purifier.id);
 
@@ -62,10 +63,11 @@ export class FilterService extends Service {
         return filter.name == Config.Filters.MAIN_FILTER;
       });
     } catch(e) {
-      Logger.error('Unable to update filter status', e);
-      callback(e);
+      Logger.error('Unable to get filter status', e);
     }
+  }
 
+  async getPreFilterChangeIndication(callback) {
     if (this.preFilterStatus.lifeLevel <= 20) {
       callback(null, Hap.Characteristic.FilterChangeIndication.CHANGE_FILTER);
     } else {
