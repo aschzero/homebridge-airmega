@@ -1,6 +1,6 @@
-import { HAP } from './types';
+import { HAP } from './types'
 
-class HALogger {
+class AirmegaLogger {
   public  log: HAP.Log;
   private debugMode: boolean;
 
@@ -19,6 +19,10 @@ class HALogger {
 
     this.log(result);
   }
+
+  error(message: string, error: any) {
+    this.log(`[ERROR] ${message}. ${error}`)
+  }
 }
 
-export const Logger = new HALogger();
+export const Logger = new AirmegaLogger();

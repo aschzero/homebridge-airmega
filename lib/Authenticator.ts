@@ -1,74 +1,113 @@
 import * as request from 'request-promise';
-import * as store from 'store';
 
+import { Client } from './Client';
 import { Config } from './Config';
-import { Logger } from './HALogger';
-import { TokenStore } from './TokenStore';
-import { Request } from './types';
+import { Purifier } from './Purifier';
+import { Request, TokenPair } from './types';
 import { AesUtil, CryptoJS } from './util/aes';
 
-export class Authenticator {
+export class Authenticator extends Client {
+  result: any;
 
   async login(username: string, password: string): Promise<void> {
-    store.set('credentials', {
-      username: username,
-      password: password
+    let stateId = await this.getStateId();
+    let cookies = await this.authenticate(stateId, username, password);
+    let authCode = await this.getAuthCode(cookies);
+
+    this.result = await this.getAccountStatus(authCode);
+
+    this.tokenStore.saveTokens({
+      accessToken: this.result.header.accessToken,
+      refreshToken: this.result.header.refreshToken,
+    });
+  }
+
+  listPurifiers(): Purifier[] {
+    let purifiers = this.result.body.deviceInfos.map(device => {
+      return new Purifier(device.barcode, device.dvcNick);
     });
 
-    await this.authenticate();
+    return purifiers;
   }
 
-  async authenticate(): Promise<void> {
-    let stateId = await this.getStateId();
-    let payload = this.buildAuthenticatePayload(stateId);
-    let response = await request(payload);
+  async refreshTokens(oldTokens: TokenPair): Promise<TokenPair> {
+    let message = this.buildAccountPayloadMessage();
 
-    this.storeTokensFromCookie(response.headers['set-cookie']);
-  }
+    message.header.accessToken = oldTokens.accessToken;
+    message.header.refreshToken = oldTokens.refreshToken;
 
-  async getStateId(): Promise<string> {
-    let payload = this.buildOauthPayload();
-
-    let response = await request(payload);
-    let query = response.request.uri.query;
-
-    return query.split('state=').slice(-1)[0];
-  }
-
-  private storeTokensFromCookie(cookies: string[]): void {
-    let tokenStore = new TokenStore();
-    let accessToken = this.findToken(cookies, Config.Auth.COWAY_ACCESS_TOKEN);
-    let refreshToken = this.findToken(cookies, Config.Auth.COWAY_REFRESH_TOKEN);
+    let payload = this.buildPayload(Config.Endpoints.DEVICE_LIST, message);
+    let response = await request.post(payload);
 
     let tokens = {
-      accessToken: accessToken,
-      refreshToken: refreshToken
+      accessToken: response.header.accessToken,
+      refreshToken: response.header.refreshToken,
     }
 
-    tokenStore.setTokens(tokens);
+    return tokens;
   }
 
-  private findToken(cookies: string[], key: string): string {
-    try {
-      let tokenCookie = cookies.find(cookie => {
-        return cookie.split('=')[0] == key
-      });
+  private async getStateId(): Promise<string> {
+    let payload = this.buildOauthPayload();
+    let response = await request.get(payload);
+    let query = response.request.uri.query;
 
-      let token = tokenCookie.split('=')[1].split(';')[0]
+    return query.match(/(?<=state\=)(.*?)$/)[0];
+  }
 
-      return token;
-    } catch(e) {
-      Logger.log(`Unable to retrieve ${key}: ${e}`);
+  private async authenticate(stateId: string, username: string, password: string): Promise<string> {
+    let iv = CryptoJS.lib.WordArray.random(16);
+    let key = CryptoJS.lib.WordArray.random(16);
+    let encryptedPassword = AesUtil.encrypt(iv, password, key);
+
+    let payload = {
+      uri: Config.Auth.SIGNIN_URL,
+      resolveWithFullResponse: true,
+      json: true,
+      headers: {
+        'Content-Type': Config.ContentType.JSON,
+        'User-Agent': Config.USER_AGENT
+      },
+      body: {
+        'username': username,
+        'password': encryptedPassword.toString(),
+        'state': stateId,
+        'auto_login': 'Y'
+      }
     }
+
+    let response = await request.post(payload);
+    let cookies = response.headers['set-cookie'];
+
+    return cookies;
   }
 
-  private buildOauthPayload(): Request.OAuthPayload {
-    let options: Request.OAuthPayload = {
+  private async getAuthCode(cookies: string): Promise<string> {
+    let payload = this.buildOauthPayload(cookies);
+    let response = await request.get(payload);
+    let query = response.request.uri.query;
+
+    return query.match(/(?<=code\=)(.*?)(?=\&)/)[0];
+  }
+
+  private async getAccountStatus(authCode: string): Promise<any> {
+    let message = this.buildAccountPayloadMessage(authCode);
+
+    let payload = this.buildPayload(Config.Endpoints.DEVICE_LIST, message);
+    let response = await request.post(payload);
+
+    return response;
+  }
+
+  // Similar OAuth payloads are used when retrieving the state ID as well
+  // as the auth code, the latter of which requires cookies.
+  private buildOauthPayload(cookies?: string): Request.OAuthPayload {
+    let payload: Request.OAuthPayload = {
       uri: Config.Auth.OAUTH_URL,
-      method: 'GET',
       resolveWithFullResponse: true,
       headers: {
-        'User-Agent': Config.USER_AGENT
+        'User-Agent': Config.USER_AGENT,
+        Cookie: cookies
       },
       qs: {
         auth_type: 0,
@@ -80,33 +119,32 @@ export class Authenticator {
       }
     }
 
-    return options;
+    return payload;
   }
 
-  private buildAuthenticatePayload(state: string): Request.AuthenticatePayload {
-    let credentials = store.get('credentials');
-
-    let iv = CryptoJS.lib.WordArray.random(16);
-    let key = CryptoJS.lib.WordArray.random(16);
-    let password = AesUtil.encrypt(iv, credentials.password, key);
-
-    let options: Request.AuthenticatePayload = {
-      uri: Config.Auth.SIGNIN_URL,
-      headers: {
-        'Content-Type': Config.ContentType.JSON,
-        'User-Agent': Config.USER_AGENT
+  private buildAccountPayloadMessage(authCode?: string) {
+    let message = {
+      header: {
+        result: false,
+        error_code: "",
+        error_text: "",
+        info_text: "",
+        message_version: "",
+        login_session_id: "",
+        trcode: Config.Endpoints.DEVICE_LIST,
+        accessToken: "",
+        refreshToken: ""
       },
-      method: 'POST',
-      json: true,
-      resolveWithFullResponse: true,
       body: {
-        'username': credentials.username,
-        'password': password.toString(),
-        'state': state,
-        'auto_login': 'Y'
+        authCode: (authCode ? authCode : ""),
+        isMobile: "M",
+        langCd: "en",
+        osType: 1,
+        redirectUrl: Config.Auth.REDIRECT_URL,
+        serviceCode: Config.Auth.SERVICE_CODE
       }
     }
 
-    return options;
+    return message;
   }
 }

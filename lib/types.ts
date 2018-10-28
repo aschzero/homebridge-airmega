@@ -1,44 +1,7 @@
-export namespace HAP {
-  export interface Accessory {
-    UUID: string;
-
-    on(...args: any[]): void;
-    getService(...args: any[]): Service;
-    addService(...args: any[]): Service;
-    getServiceByUUIDAndSubType(...args: any[]): Service;
-    updateReachability(reachable: boolean): void;
-  }
-
-  export interface Service {
-    AccessoryInformation: void;
-
-    setCharacteristic(...args: any[]): Service;
-    getCharacteristic(...args: any[]): Characteristic;
-  }
-
-  export interface Characteristic {
-    on(...args: any[]): Characteristic;
-  }
-
-  export interface Log {
-    (...args: any[]): void;
-    error(...args: any[]): void;
-  }
-
-  export interface AccessoryConfig {
-    error(...args: any[]): void
-  }
-
-  export interface Platform {
-    on(...args: any[]): void
-    registerPlatformAccessories(...args: any[]): void
-  }
-}
-
-export interface Tokens {
+export interface TokenPair {
   accessToken: string
   refreshToken: string
-  storedAt: number
+  storedAt?: number
 }
 
 export namespace Request {
@@ -55,7 +18,6 @@ export namespace Request {
 
   export interface Payload {
     uri: string
-    method: string
     headers: any
     json: boolean
     form: string
@@ -63,10 +25,9 @@ export namespace Request {
 
   export interface OAuthPayload {
     uri: string
-    method: string
     headers: any
     qs: any
-    resolveWithFullResponse: boolean
+    resolveWithFullResponse?: boolean
   }
 
   export interface AuthenticatePayload {
@@ -74,7 +35,6 @@ export namespace Request {
     method: string
     headers: any
     json: boolean
-    resolveWithFullResponse: boolean
     body: AuthenticateBodyPayload
   }
 
@@ -86,7 +46,7 @@ export namespace Request {
   }
 }
 
-export namespace Purifier {
+export namespace PurifierResponse {
   export enum Power {
     On = '1',
     Off = '0'
@@ -133,5 +93,44 @@ export namespace Purifier {
   export interface Metadata {
     nickname: string
     barcode: string
+  }
+}
+
+export namespace HAP {
+  export interface Accessory {
+    UUID: string;
+    reachability: boolean;
+
+    on(...args: any[]): void;
+    getService(...args: any[]): Service;
+    addService(...args: any[]): Service;
+    getServiceByUUIDAndSubType(...args: any[]): Service;
+    updateReachability(reachable: boolean): void;
+  }
+
+  export interface Service {
+    AccessoryInformation: void;
+
+    setCharacteristic(...args: any[]): Service;
+    getCharacteristic(...args: any[]): Characteristic;
+  }
+
+  export interface Characteristic {
+    on(...args: any[]): Characteristic;
+    updateValue(...args: any[]): Characteristic;
+  }
+
+  export interface Log {
+    (...args: any[]): void;
+    error(...args: any[]): void;
+  }
+
+  export interface AccessoryConfig {
+    error(...args: any[]): void
+  }
+
+  export interface Platform {
+    on(...args: any[]): void
+    registerPlatformAccessories(...args: any[]): void
   }
 }
