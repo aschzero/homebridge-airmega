@@ -76,12 +76,17 @@ export class PurifierAccessory {
   }
 
   async getActiveState(callback): Promise<void> {
-    let status = await this.client.getStatus(this.purifier.id);
+    try {
+      let status = await this.client.getStatus(this.purifier.id);
 
-    if (status.power == PurifierResponse.Power.On) {
-      callback(null, Hap.Characteristic.Active.ACTIVE);
-    } else {
-      callback(null, Hap.Characteristic.Active.INACTIVE);
+      if (status.power == PurifierResponse.Power.On) {
+        callback(null, Hap.Characteristic.Active.ACTIVE);
+      } else {
+        callback(null, Hap.Characteristic.Active.INACTIVE);
+      }
+    } catch(e) {
+      Logger.error('Unable to get active state', e);
+      callback(e);
     }
   }
 
@@ -123,29 +128,39 @@ export class PurifierAccessory {
   }
 
   async getCurrentAirPurifierState(callback): Promise<void> {
-    let status = await this.client.getStatus(this.purifier.id);
-    this.purifier.setStatus(status);
+    try {
+      let status = await this.client.getStatus(this.purifier.id);
+      this.purifier.setStatus(status);
 
-    if (status.power == PurifierResponse.Power.Off) {
-      callback(null, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
-      return;
+      if (status.power == PurifierResponse.Power.Off) {
+        callback(null, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
+        return;
+      }
+
+      if (status.state == PurifierResponse.State.Sleep || status.state == PurifierResponse.State.AutoSleep) {
+        callback(null, Hap.Characteristic.CurrentAirPurifierState.IDLE);
+        return;
+      }
+
+      callback(null, Hap.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
+    } catch(e) {
+      Logger.error('Unable to get current state', e);
+      callback(e);
     }
-
-    if (status.state == PurifierResponse.State.Sleep || status.state == PurifierResponse.State.AutoSleep) {
-      callback(null, Hap.Characteristic.CurrentAirPurifierState.IDLE);
-      return;
-    }
-
-    callback(null, Hap.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
   }
 
   async getTargetPurifierState(callback): Promise<void> {
-    let status = await this.client.getStatus(this.purifier.id);
+    try {
+      let status = await this.client.getStatus(this.purifier.id);
 
-    if (status.state == PurifierResponse.State.Auto) {
-      callback(null, Hap.Characteristic.TargetAirPurifierState.AUTO);
-    } else {
-      callback(null, Hap.Characteristic.TargetAirPurifierState.MANUAL);
+      if (status.state == PurifierResponse.State.Auto) {
+        callback(null, Hap.Characteristic.TargetAirPurifierState.AUTO);
+      } else {
+        callback(null, Hap.Characteristic.TargetAirPurifierState.MANUAL);
+      }
+    } catch(e) {
+      Logger.error('Unable to get target state', e);
+      callback(e);
     }
   }
 
@@ -169,12 +184,17 @@ export class PurifierAccessory {
   }
 
   async getRotationSpeed(callback): Promise<void> {
-    let status = await this.client.getStatus(this.purifier.id);
+    try {
+      let status = await this.client.getStatus(this.purifier.id);
 
-    let intervals = {1: 20, 2: 50, 3: 100};
-    let fanSpeed = intervals[status.fan];
+      let intervals = {1: 20, 2: 50, 3: 100};
+      let fanSpeed = intervals[status.fan];
 
-    callback(null, fanSpeed);
+      callback(null, fanSpeed);
+    } catch(e) {
+      Logger.error('Unable to get fan speed', e);
+      callback(e);
+    }
   }
 
   async setRotationSpeed(targetState, callback) {
