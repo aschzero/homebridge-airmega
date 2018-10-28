@@ -18,25 +18,25 @@ export class AirmegaPlatform {
     this.accessories = [];
     this.registeredAccessories = new Map<string, HAP.Accessory>();
 
-    if (this.platform) {
-      this.platform.on('didFinishLaunching', () => {
-        let username = config['username'];
-        let password = config['password'];
+    if (!this.platform) return;
 
-        if (!username || !password) {
-          throw Error('username and password fields are required in config');
-        }
+    this.platform.on('didFinishLaunching', () => {
+      let username = config['username'];
+      let password = config['password'];
 
-        try {
-          this.setup(username, password);
-        } catch(e) {
-          Logger.log(`Unable to retrieve purifiers: ${e}`);
-        }
-      });
-    }
+      if (!username || !password) {
+        throw Error('username and password fields are required in config');
+      }
+
+      try {
+        this.getPurifiers(username, password);
+      } catch(e) {
+        Logger.log(`Unable to retrieve purifiers: ${e}`);
+      }
+    });
   }
 
-  async setup(username: string, password: string): Promise<void> {
+  async getPurifiers(username: string, password: string): Promise<void> {
     let authenticator = new Authenticator();
 
     Logger.log('Authenticating...');
@@ -52,8 +52,8 @@ export class AirmegaPlatform {
 
     try {
       authenticator.getPurifiers().forEach(purifier => {
-        this.addAccessory(purifier);
-        Logger.log(`Created accessory for '${purifier.nickname}'`);
+        let accessory = this.addAccessory(purifier);
+        new PurifierAccessory(accessory, purifier);
       });
     } catch(e) {
       Logger.log(`Unable to retrieve purifiers: ${e}`);
@@ -61,13 +61,7 @@ export class AirmegaPlatform {
     }
   }
 
-  configureAccessory(accessory: HAP.Accessory): void {
-    accessory.updateReachability(false);
-
-    this.registeredAccessories.set(accessory.UUID, accessory);
-  }
-
-  addAccessory(purifier: Purifier.Metadata): void {
+  addAccessory(purifier: Purifier.Metadata): HAP.Accessory {
     let uuid: string = Hap.UUIDGen.generate(purifier.nickname);
     let accessory: HAP.Accessory;
 
@@ -75,17 +69,17 @@ export class AirmegaPlatform {
       accessory = this.registeredAccessories.get(uuid);
     } else {
       accessory = new Hap.Accessory(purifier.nickname, uuid);
-    }
 
-    new PurifierAccessory(accessory, purifier);
-
-    accessory.on('identify', (paired, callback) => {
-      callback();
-    });
-
-    this.accessories.push(accessory);
-    if (!this.registeredAccessories.get(uuid)) {
       this.platform.registerPlatformAccessories('homebridge-airmega', 'Airmega', [accessory]);
     }
+
+    this.accessories.push(accessory);
+
+    return accessory;
+  }
+
+  configureAccessory(accessory: HAP.Accessory): void {
+    accessory.reachability = false;
+    this.registeredAccessories.set(accessory.UUID, accessory);
   }
 }
