@@ -40,7 +40,7 @@ export class PurifierService extends Service {
 
   async getActiveState(callback): Promise<void> {
     try {
-      let status = await this.updateStatus();
+      let status = await this.waitForStatusUpdate();
 
       if (status.power == PurifierResponse.Power.On) {
         callback(null, Hap.Characteristic.Active.ACTIVE);
@@ -109,7 +109,7 @@ export class PurifierService extends Service {
 
   async getTargetPurifierState(callback): Promise<void> {
     try {
-      let status = await this.waitForStatusUpdate();
+      let status = await this.updateStatus();
 
       if (status.state == PurifierResponse.State.Auto) {
         callback(null, Hap.Characteristic.TargetAirPurifierState.AUTO);
