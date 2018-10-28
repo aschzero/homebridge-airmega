@@ -1,5 +1,5 @@
 import { Config } from './Config';
-import { Logger } from './HALogger';
+import { Logger } from './Logger';
 import { Hap } from './HAP';
 import { PurifierClient } from './PurifierClient';
 import { HAP, Purifier } from './types';

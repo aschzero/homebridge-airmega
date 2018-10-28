@@ -1,7 +1,7 @@
 import * as store from 'store';
 
 import { Authenticator } from './Authenticator';
-import { Logger } from './HALogger';
+import { Logger } from './Logger';
 import { Tokens } from './types';
 
 export class TokenStore {

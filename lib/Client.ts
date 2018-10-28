@@ -1,7 +1,7 @@
 import * as request from 'request-promise';
 
 import { Config } from './Config';
-import { Logger } from './HALogger';
+import { Logger } from './Logger';
 import { TokenStore } from './TokenStore';
 import { Request, Tokens } from './types';
 

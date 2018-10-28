@@ -1,6 +1,6 @@
 import { Client } from './Client';
 import { Config } from './Config';
-import { Logger } from './HALogger';
+import { Logger } from './Logger';
 import { Purifier, Request } from './types';
 
 export class PurifierClient extends Client {

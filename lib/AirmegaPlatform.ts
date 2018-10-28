@@ -1,8 +1,7 @@
 import { Authenticator } from './Authenticator';
-import { Logger } from './HALogger';
 import { Hap } from './HAP';
+import { Logger } from './Logger';
 import { PurifierAccessory } from './PurifierAccessory';
-import { PurifierClient } from './PurifierClient';
 import { HAP, Purifier } from './types';
 
 export class AirmegaPlatform {
@@ -31,7 +30,7 @@ export class AirmegaPlatform {
       try {
         this.getPurifiers(username, password);
       } catch(e) {
-        Logger.log(`Unable to retrieve purifiers: ${e}`);
+        Logger.error('Unable to retrieve purifiers', e);
       }
     });
   }
@@ -44,7 +43,7 @@ export class AirmegaPlatform {
     try {
       await authenticator.login(username, password);
     } catch(e) {
-      Logger.log(`Unable to login: ${e}`);
+      Logger.error('Unable to login', e);
       return;
     }
 
@@ -56,7 +55,7 @@ export class AirmegaPlatform {
         new PurifierAccessory(accessory, purifier);
       });
     } catch(e) {
-      Logger.log(`Unable to retrieve purifiers: ${e}`);
+      Logger.error('Unable to retrieve purifiers', e);
       return;
     }
   }
