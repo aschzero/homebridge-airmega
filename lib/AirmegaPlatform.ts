@@ -1,7 +1,7 @@
 import { Authenticator } from './Authenticator';
 import { Hap } from './HAP';
 import { Logger } from './Logger';
-import { PurifierAccessory } from './PurifierAccessory';
+import { AirmegaAccessory } from './AirmegaAccessory';
 import { Purifier } from './Purifier';
 
 import { HAP } from './types';
@@ -54,7 +54,7 @@ export class AirmegaPlatform {
     try {
       authenticator.listPurifiers().forEach(purifier => {
         let accessory = this.addAccessory(purifier);
-        new PurifierAccessory(accessory, purifier);
+        new AirmegaAccessory(accessory, purifier);
       });
     } catch(e) {
       Logger.error('Unable to retrieve purifiers', e);

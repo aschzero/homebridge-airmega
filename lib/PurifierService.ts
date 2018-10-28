@@ -1,42 +1,12 @@
-import { Client } from './Client';
 import { Hap } from './HAP';
 import { Logger } from './Logger';
-import { Purifier } from './Purifier';
+import { Service } from './Service';
 import { HAP, PurifierResponse } from './types';
-import { AirQualityService } from './AirQualityService';
-import { FilterService } from './FilterService';
-import { LightService } from './LightService';
 
-export class PurifierAccessory {
-  client: Client;
-  purifier: Purifier;
-  accessory: HAP.Accessory;
-
+export class PurifierService extends Service {
   purifierService: HAP.Service;
-  airQualityService: AirQualityService;
 
-  constructor(accessory: HAP.Accessory, purifier: Purifier) {
-    this.purifier = purifier;
-    this.accessory = accessory;
-    this.client = new Client();
-
-    this.setupAccessoryInformationService();
-    this.setupPurifierService();
-    this.setupCompanionServices();
-
-    this.accessory.updateReachability(true);
-
-    Logger.log(`Created accessory for '${this.purifier.name}'`);
-  }
-
-  setupAccessoryInformationService(): void {
-    this.accessory.getService(Hap.Service.AccessoryInformation)
-      .setCharacteristic(Hap.Characteristic.Manufacturer, 'Coway')
-      .setCharacteristic(Hap.Characteristic.Model, 'Airmega')
-      .setCharacteristic(Hap.Characteristic.SerialNumber, this.purifier.id);
-  }
-
-  setupPurifierService(): void {
+  registerServices(): HAP.Service {
     this.purifierService = this.getOrCreatePurifierService();
 
     this.purifierService.getCharacteristic(Hap.Characteristic.Active)
@@ -53,16 +23,8 @@ export class PurifierAccessory {
     this.purifierService.getCharacteristic(Hap.Characteristic.RotationSpeed)
       .on('get', this.getRotationSpeed.bind(this))
       .on('set', this.setRotationSpeed.bind(this));
-  }
 
-  setupCompanionServices(): void {
-    let airQualityService = new AirQualityService(this.purifier, this.accessory);
-    let filterService = new FilterService(this.purifier, this.accessory);
-    let lightService = new LightService(this.purifier, this.accessory);
-
-    airQualityService.registerServices();
-    filterService.registerServices();
-    lightService.registerServices();
+    return this.purifierService;
   }
 
   getOrCreatePurifierService(): HAP.Service {
@@ -77,7 +39,7 @@ export class PurifierAccessory {
 
   async getActiveState(callback): Promise<void> {
     try {
-      let status = await this.client.getStatus(this.purifier.id);
+      let status = await this.updateStatus();
 
       if (status.power == PurifierResponse.Power.On) {
         callback(null, Hap.Characteristic.Active.ACTIVE);
@@ -90,7 +52,7 @@ export class PurifierAccessory {
     }
   }
 
-  async setActiveState(targetState, callback) {
+  async setActiveState(targetState, callback): Promise<void> {
     // Only toggle power when new state is different.
     // Prevents extraneous calls especially when changing
     // the fan speed (setRotationSpeed ensures device is on).
@@ -98,8 +60,6 @@ export class PurifierAccessory {
       callback(null);
       return;
     }
-
-    Logger.log(`${this.purifier.name} is turning ${targetState ? 'on' : 'off'}...`);
 
     try {
       await this.client.setPower(this.purifier.id, targetState);
@@ -111,26 +71,21 @@ export class PurifierAccessory {
     // Need to update the current purifier state characteristic here
     // otherwise it hangs on 'Turning on...'/'Turning off...'
     if (targetState) {
-      this.purifierService.getCharacteristic(Hap.Characteristic.CurrentAirPurifierState)
-                          .updateValue(Hap.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
+      this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
 
       this.purifier.power = PurifierResponse.Power.On;
     } else {
-      this.purifierService.getCharacteristic(Hap.Characteristic.CurrentAirPurifierState)
-                          .updateValue(Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
+      this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
 
       this.purifier.power = PurifierResponse.Power.Off;
     }
-
-    Logger.log(this.purifier.name, `has been turned ${targetState ? 'on' : 'off'}`);
 
     callback(null);
   }
 
   async getCurrentAirPurifierState(callback): Promise<void> {
     try {
-      let status = await this.client.getStatus(this.purifier.id);
-      this.purifier.setStatus(status);
+      let status = await this.waitForStatusUpdate();
 
       if (status.power == PurifierResponse.Power.Off) {
         callback(null, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
@@ -151,7 +106,7 @@ export class PurifierAccessory {
 
   async getTargetPurifierState(callback): Promise<void> {
     try {
-      let status = await this.client.getStatus(this.purifier.id);
+      let status = await this.waitForStatusUpdate();
 
       if (status.state == PurifierResponse.State.Auto) {
         callback(null, Hap.Characteristic.TargetAirPurifierState.AUTO);
@@ -174,8 +129,6 @@ export class PurifierAccessory {
         this.purifier.state = PurifierResponse.State.Manual;
       }
 
-      Logger.log(this.purifier.name, `set to ${targetState ? 'auto' : 'manual'}`);
-
       callback(null);
     } catch(e) {
       Logger.error('Unable to set new state', e);
@@ -185,7 +138,7 @@ export class PurifierAccessory {
 
   async getRotationSpeed(callback): Promise<void> {
     try {
-      let status = await this.client.getStatus(this.purifier.id);
+      let status = await this.waitForStatusUpdate();
 
       let intervals = {1: 20, 2: 50, 3: 100};
       let fanSpeed = intervals[status.fan];
@@ -217,8 +170,8 @@ export class PurifierAccessory {
     try {
       await this.client.setFanSpeed(this.purifier.id, targetSpeed);
 
-      this.purifierService.getCharacteristic(Hap.Characteristic.CurrentAirPurifierState)
-                          .updateValue(Hap.Characteristic.CurrentAirPurifierState.MANUAL);
+      this.purifierService.getCharacteristic(Hap.Characteristic.TargetAirPurifierState)
+                          .updateValue(Hap.Characteristic.TargetAirPurifierState.MANUAL);
 
       callback(null);
     } catch(e) {

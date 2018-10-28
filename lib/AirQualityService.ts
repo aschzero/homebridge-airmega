@@ -18,8 +18,8 @@ export class AirQualityService extends Service {
   }
 
   async getAirQuality(callback): Promise<void> {
+    let status = await this.waitForStatusUpdate();
     let result;
-    let status = await this.client.getStatus(this.purifier.id);
 
     switch (status.airQuality) {
       case PurifierResponse.AirQuality.Excellent:
