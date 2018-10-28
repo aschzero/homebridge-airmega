@@ -11,10 +11,9 @@
 		"store": "^2.0.12"
 	},
 	"devDependencies": {
-		"@types/request-promise": "^4.1.41",
-		"@types/storejs": "^2.0.2",
 		"typescript": "^2.9.2",
-		"yarn": "^1.7.0"
+		"@types/request-promise": "^4.1.41",
+		"@types/storejs": "^2.0.2"
 	},
 	"engines": {
 		"node": ">=0.12.0",
