@@ -15,8 +15,6 @@ export class Service {
 
     this.purifier = purifier;
     this.accessory = accessory;
-
-    this.statusUpdateHandler = this.updateStatus();
   }
 
   async waitForStatusUpdate(): Promise<PurifierResponse.Status> {
