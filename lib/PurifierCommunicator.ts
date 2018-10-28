@@ -31,11 +31,11 @@ export class PurifierCommunicator extends Communicator {
     let statusResponse = response.body.prodStatus[0];
 
     let status: Purifier.Status = {
-      power: statusResponse['power'],
-      light: statusResponse['light'],
-      fan: statusResponse['airVolume'],
-      state: statusResponse['prodMode'],
-      airQuality: statusResponse['dustPollution']
+      power: statusResponse.power,
+      light: statusResponse.light,
+      fan: statusResponse.airVolume,
+      state: statusResponse.prodMode,
+      airQuality: statusResponse.dustPollution
     }
 
     Logger.debug('Status', status);
