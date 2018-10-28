@@ -20,8 +20,8 @@ export class TokenStore {
       Logger.log('Tokens expired, refreshing...');
 
       try {
-        let authenticator = new Authenticator();
-        await authenticator.authenticate();
+        // let authenticator = new Authenticator();
+        // await authenticator.authenticate();
         Logger.log('Token refresh succeeded');
       } catch(e) {
         Logger.log(`Unable to reauthenticate: ${e}`)

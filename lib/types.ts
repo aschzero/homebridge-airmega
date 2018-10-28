@@ -38,7 +38,7 @@ export namespace HAP {
 export interface Tokens {
   accessToken: string
   refreshToken: string
-  storedAt: number
+  storedAt?: number
 }
 
 export namespace Request {
@@ -63,10 +63,9 @@ export namespace Request {
 
   export interface OAuthPayload {
     uri: string
-    method: string
     headers: any
     qs: any
-    resolveWithFullResponse: boolean
+    resolveWithFullResponse?: boolean
   }
 
   export interface AuthenticatePayload {
@@ -74,7 +73,6 @@ export namespace Request {
     method: string
     headers: any
     json: boolean
-    resolveWithFullResponse: boolean
     body: AuthenticateBodyPayload
   }
 

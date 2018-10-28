@@ -1,74 +1,119 @@
 import * as request from 'request-promise';
-import * as store from 'store';
 
 import { Config } from './Config';
 import { Logger } from './HALogger';
 import { TokenStore } from './TokenStore';
-import { Request } from './types';
+import { Request, Tokens } from './types';
 import { AesUtil, CryptoJS } from './util/aes';
 
 export class Authenticator {
 
   async login(username: string, password: string): Promise<void> {
-    store.set('credentials', {
-      username: username,
-      password: password
-    });
-
-    await this.authenticate();
-  }
-
-  async authenticate(): Promise<void> {
     let stateId = await this.getStateId();
-    let payload = this.buildAuthenticatePayload(stateId);
-    let response = await request(payload);
+    let cookies = await this.authenticate(stateId, username, password);
+    let authCode = await this.getAuthCode(cookies);
+    let tokens = await this.getAuthTokens(authCode);
 
-    this.storeTokensFromCookie(response.headers['set-cookie']);
+    new TokenStore().setTokens(tokens);
   }
 
-  async getStateId(): Promise<string> {
+  private async getStateId(): Promise<string> {
     let payload = this.buildOauthPayload();
-
-    let response = await request(payload);
+    let response = await request.get(payload);
     let query = response.request.uri.query;
 
-    return query.split('state=').slice(-1)[0];
+    return query.match(/(?<=state\=)(.*?)(?=\&)/)[0];
   }
 
-  private storeTokensFromCookie(cookies: string[]): void {
-    let tokenStore = new TokenStore();
-    let accessToken = this.findToken(cookies, Config.Auth.COWAY_ACCESS_TOKEN);
-    let refreshToken = this.findToken(cookies, Config.Auth.COWAY_REFRESH_TOKEN);
+  private async authenticate(stateId: string, username: string, password: string): Promise<string> {
+    let iv = CryptoJS.lib.WordArray.random(16);
+    let key = CryptoJS.lib.WordArray.random(16);
+    let encryptedPassword = AesUtil.encrypt(iv, password, key);
 
-    let tokens = {
-      accessToken: accessToken,
-      refreshToken: refreshToken
+    let payload = {
+      uri: Config.Auth.SIGNIN_URL,
+      resolveWithFullResponse: true,
+      json: true,
+      headers: {
+        'Content-Type': Config.ContentType.JSON,
+        'User-Agent': Config.USER_AGENT
+      },
+      body: {
+        'username': username,
+        'password': encryptedPassword.toString(),
+        'state': stateId,
+        'auto_login': 'Y'
+      }
     }
 
-    tokenStore.setTokens(tokens);
+    let response = await request.post(payload);
+    let cookies = response.headers['set-cookie'];
+
+    return cookies;
   }
 
-  private findToken(cookies: string[], key: string): string {
+  private async getAuthCode(cookies: string): Promise<string> {
+    let payload = this.buildOauthPayload(cookies);
+    let response = await request.get(payload);
+    let query = response.request.uri.query;
+
+    return query.match(/(?<=code\=)(.*?)(?=\&)/)[0];
+  }
+
+  private async getAuthTokens(authCode: string): Promise<Tokens> {
+    let message = {
+      "header": {
+        "result": false,
+        "error_code": "",
+        "error_text": "",
+        "info_text": "",
+        "message_version": "",
+        "login_session_id": "",
+        "trcode": "CWIL0100",
+        "accessToken": "",
+        "refreshToken": ""
+      },
+      "body": {
+        "authCode": authCode,
+        "isMobile": "M",
+        "langCd": "en",
+        "osType": 1,
+        "redirectUrl": Config.Auth.REDIRECT_URL,
+        "serviceCode": "com.coway.IOCareKor"
+      }
+    }
+
+    // use communicatr::buildPayload here?
+    let payload = {
+      uri: `${Config.BASE_URI}/${Config.Endpoints.DEVICE_LIST}`,
+      headers: {
+        ContentType: 'application/x-www-form-urlencoded',
+        Accept: 'application/json'
+      },
+      json: true,
+      form:`message=${encodeURIComponent(JSON.stringify(message))}`
+    }
+
     try {
-      let tokenCookie = cookies.find(cookie => {
-        return cookie.split('=')[0] == key
-      });
+      let response = await request.post(payload);
+      let tokens = {
+        accessToken: response.header.accessToken,
+        refreshToken: response.header.refreshToken,
+      }
 
-      let token = tokenCookie.split('=')[1].split(';')[0]
-
-      return token;
+      return tokens;
     } catch(e) {
-      Logger.log(`Unable to retrieve ${key}: ${e}`);
+      Logger.log(`Unable to retrieve auth tokens: ${e}`);
     }
   }
 
-  private buildOauthPayload(): Request.OAuthPayload {
-    let options: Request.OAuthPayload = {
+  private buildOauthPayload(cookies?: string): Request.OAuthPayload {
+    let payload: Request.OAuthPayload = {
       uri: Config.Auth.OAUTH_URL,
-      method: 'GET',
       resolveWithFullResponse: true,
       headers: {
-        'User-Agent': Config.USER_AGENT
+        'User-Agent': Config.USER_AGENT,
+        Cookie: cookies
       },
       qs: {
         auth_type: 0,
@@ -80,33 +125,6 @@ export class Authenticator {
       }
     }
 
-    return options;
-  }
-
-  private buildAuthenticatePayload(state: string): Request.AuthenticatePayload {
-    let credentials = store.get('credentials');
-
-    let iv = CryptoJS.lib.WordArray.random(16);
-    let key = CryptoJS.lib.WordArray.random(16);
-    let password = AesUtil.encrypt(iv, credentials.password, key);
-
-    let options: Request.AuthenticatePayload = {
-      uri: Config.Auth.SIGNIN_URL,
-      headers: {
-        'Content-Type': Config.ContentType.JSON,
-        'User-Agent': Config.USER_AGENT
-      },
-      method: 'POST',
-      json: true,
-      resolveWithFullResponse: true,
-      body: {
-        'username': credentials.username,
-        'password': password.toString(),
-        'state': state,
-        'auto_login': 'Y'
-      }
-    }
-
-    return options;
+    return payload;
   }
 }
