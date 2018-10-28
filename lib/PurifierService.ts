@@ -2,6 +2,7 @@ import { Hap } from './HAP';
 import { Logger } from './Logger';
 import { Service } from './Service';
 import { HAP, PurifierResponse } from './types';
+import { LightService } from './LightService';
 
 export class PurifierService extends Service {
   purifierService: HAP.Service;
@@ -61,26 +62,28 @@ export class PurifierService extends Service {
       return;
     }
 
+    let lightService = this.accessory.getService(Hap.Service.Lightbulb);
+
     try {
       await this.client.setPower(this.purifier.id, targetState);
+
+      if (targetState) {
+        this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
+        this.purifier.power = PurifierResponse.Power.On;
+
+        lightService.getCharacteristic(Hap.Characteristic.On).updateValue(true);
+      } else {
+        this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
+        this.purifier.power = PurifierResponse.Power.Off;
+
+        lightService.getCharacteristic(Hap.Characteristic.On).updateValue(false);
+      }
+
+      callback(null);
     } catch(e) {
       Logger.error('Unable to toggle power', e);
       callback(e);
     }
-
-    // Need to update the current purifier state characteristic here
-    // otherwise it hangs on 'Turning on...'/'Turning off...'
-    if (targetState) {
-      this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
-
-      this.purifier.power = PurifierResponse.Power.On;
-    } else {
-      this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
-
-      this.purifier.power = PurifierResponse.Power.Off;
-    }
-
-    callback(null);
   }
 
   async getCurrentAirPurifierState(callback): Promise<void> {
