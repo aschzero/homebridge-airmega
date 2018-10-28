@@ -36,16 +36,6 @@ export class PurifierAccessory {
     Logger.log(`Created accessory for '${this.purifier.name}'`);
   }
 
-  getOrCreatePurifierService(): HAP.Service {
-    let purifierService = this.accessory.getService(Hap.Service.AirPurifier);
-
-    if (!purifierService) {
-      purifierService = this.accessory.addService(Hap.Service.AirPurifier, this.purifier.name);
-    }
-
-    return purifierService;
-  }
-
   setupAccessoryInformationServiceCharacteristics(): void {
     this.accessory.getService(Hap.Service.AccessoryInformation)
       .setCharacteristic(Hap.Characteristic.Manufacturer, 'Coway')
@@ -70,6 +60,16 @@ export class PurifierAccessory {
     this.purifierService.getCharacteristic(Hap.Characteristic.RotationSpeed)
       .on('get', this.getRotationSpeed.bind(this))
       .on('set', this.setRotationSpeed.bind(this));
+  }
+
+  getOrCreatePurifierService(): HAP.Service {
+    let purifierService = this.accessory.getService(Hap.Service.AirPurifier);
+
+    if (!purifierService) {
+      purifierService = this.accessory.addService(Hap.Service.AirPurifier, this.purifier.name);
+    }
+
+    return purifierService;
   }
 
   async getActiveState(callback): Promise<void> {
@@ -121,6 +121,7 @@ export class PurifierAccessory {
 
   async getCurrentAirPurifierState(callback): Promise<void> {
     let status = await this.client.getStatus(this.purifier.id);
+    this.purifier.setStatus(status);
 
     if (status.power == PurifierResponse.Power.Off) {
       callback(null, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
@@ -193,11 +194,8 @@ export class PurifierAccessory {
     try {
       await this.client.setFanSpeed(this.purifier.id, targetSpeed);
 
-      // not working :(
-      // this.purifierService.getCharacteristic(Hap.Characteristic.CurrentAirPurifierState)
-      //                     .updateValue(Hap.Characteristic.CurrentAirPurifierState.MANUAL);
-
-      this.purifier.fan = targetSpeed;
+      this.purifierService.getCharacteristic(Hap.Characteristic.CurrentAirPurifierState)
+                          .updateValue(Hap.Characteristic.CurrentAirPurifierState.MANUAL);
 
       callback(null);
     } catch(e) {
