@@ -46,7 +46,7 @@ export namespace Request {
   }
 }
 
-export namespace Purifier {
+export namespace PurifierResponse {
   export enum Power {
     On = '1',
     Off = '0'
@@ -117,6 +117,7 @@ export namespace HAP {
 
   export interface Characteristic {
     on(...args: any[]): Characteristic;
+    updateValue(...args: any[]): Characteristic;
   }
 
   export interface Log {

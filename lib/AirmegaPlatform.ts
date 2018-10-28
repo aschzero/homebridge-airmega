@@ -2,7 +2,9 @@ import { Authenticator } from './Authenticator';
 import { Hap } from './HAP';
 import { Logger } from './Logger';
 import { PurifierAccessory } from './PurifierAccessory';
-import { HAP, Purifier } from './types';
+import { Purifier } from './Purifier';
+
+import { HAP } from './types';
 
 export class AirmegaPlatform {
   platform: HAP.Platform;
@@ -28,14 +30,14 @@ export class AirmegaPlatform {
       }
 
       try {
-        this.getPurifiers(username, password);
+        this.retrievePurifiers(username, password);
       } catch(e) {
         Logger.error('Unable to retrieve purifiers', e);
       }
     });
   }
 
-  async getPurifiers(username: string, password: string): Promise<void> {
+  async retrievePurifiers(username: string, password: string): Promise<void> {
     let authenticator = new Authenticator();
 
     Logger.log('Authenticating...');
@@ -50,7 +52,7 @@ export class AirmegaPlatform {
     Logger.log('Retrieving purifiers...');
 
     try {
-      authenticator.getPurifiers().forEach(purifier => {
+      authenticator.listPurifiers().forEach(purifier => {
         let accessory = this.addAccessory(purifier);
         new PurifierAccessory(accessory, purifier);
       });
@@ -60,14 +62,14 @@ export class AirmegaPlatform {
     }
   }
 
-  addAccessory(purifier: Purifier.Metadata): HAP.Accessory {
-    let uuid: string = Hap.UUIDGen.generate(purifier.nickname);
+  addAccessory(purifier: Purifier): HAP.Accessory {
+    let uuid: string = Hap.UUIDGen.generate(purifier.name);
     let accessory: HAP.Accessory;
 
     if (this.registeredAccessories.get(uuid)) {
       accessory = this.registeredAccessories.get(uuid);
     } else {
-      accessory = new Hap.Accessory(purifier.nickname, uuid);
+      accessory = new Hap.Accessory(purifier.name, uuid);
 
       this.platform.registerPlatformAccessories('homebridge-airmega', 'Airmega', [accessory]);
     }

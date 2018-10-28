@@ -7,34 +7,39 @@ import { Tokens } from './types';
 export class TokenStore {
   static readonly TOKEN_KEY = 'tokens';
   static readonly CREDENTIAL_KEY = 'credentials';
-  static readonly TOKEN_EXP = 3600000;
+  static readonly TOKEN_EXP_LENGTH = 3600000;
 
-  setTokens(data: any): void {
-    data.storedAt = Date.now()
+  setTokens(tokens: Tokens): void {
+    tokens.storedAt = Date.now();
 
-    store.set(TokenStore.TOKEN_KEY, data);
+    store.set(TokenStore.TOKEN_KEY, tokens);
   }
 
   async getTokens(): Promise<Tokens> {
-    if (this.isExpired()) {
-      Logger.log('Tokens expired, refreshing...');
+    let tokens = store.get(TokenStore.TOKEN_KEY);
 
-      try {
-        // let authenticator = new Authenticator();
-        // await authenticator.authenticate();
-        Logger.log('Token refresh succeeded');
-      } catch(e) {
-        Logger.log(`Unable to reauthenticate: ${e}`)
-      }
+    if (!this.isExpired()) {
+      return tokens;
     }
 
-    return store.get(TokenStore.TOKEN_KEY);
+    Logger.log('Auth tokens are expired, refreshing...');
+
+    try {
+      let authenticator = new Authenticator();
+      let newTokens = await authenticator.refreshTokens(tokens);
+
+      this.setTokens(newTokens);
+
+      Logger.log('Token refresh succeeded!');
+      Logger.debug('New tokens', newTokens); // remove
+    } catch(e) {
+      Logger.error('Unable to refresh tokens', e);
+    }
   }
 
   isExpired(): boolean {
     let tokens: Tokens = store.get('tokens');
-    let now = Date.now();
 
-    return (now - tokens.storedAt) >= TokenStore.TOKEN_EXP;
+    return (Date.now() - tokens.storedAt) >= TokenStore.TOKEN_EXP_LENGTH;
   }
 }

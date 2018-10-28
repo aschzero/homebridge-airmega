@@ -2,27 +2,19 @@ import * as request from 'request-promise';
 
 import { Client } from './Client';
 import { Config } from './Config';
-import { Purifier, Request } from './types';
+import { PurifierResponse, Request, Tokens } from './types';
 import { AesUtil, CryptoJS } from './util/aes';
+import { Purifier } from './Purifier';
 
 export class Authenticator extends Client {
-  stateIdRegex: RegExp;
-  authCodeRegex: RegExp;
   result: any;
-
-  constructor() {
-    super();
-
-    this.stateIdRegex = /(?<=state\=)(.*?)$/;
-    this.authCodeRegex = /(?<=code\=)(.*?)(?=\&)/;
-  }
 
   async login(username: string, password: string): Promise<void> {
     let stateId = await this.getStateId();
     let cookies = await this.authenticate(stateId, username, password);
     let authCode = await this.getAuthCode(cookies);
 
-    this.result = await this.getFinalResult(authCode);
+    this.result = await this.getAccountStatus(authCode);
 
     this.tokenStore.setTokens({
       accessToken: this.result.header.accessToken,
@@ -30,17 +22,29 @@ export class Authenticator extends Client {
     });
   }
 
-  getPurifiers(): Purifier.Metadata[] {
+  listPurifiers(): Purifier[] {
     let purifiers = this.result.body.deviceInfos.map(device => {
-      let metadata: Purifier.Metadata = {
-        nickname: device.dvcNick,
-        barcode: device.barcode
-      }
-
-      return metadata;
+      return new Purifier(device.barcode, device.dvcNick);
     });
 
     return purifiers;
+  }
+
+  async refreshTokens(oldTokens: Tokens): Promise<Tokens> {
+    let message = this.buildAccountPayloadMessage();
+
+    message.header.accessToken = oldTokens.accessToken;
+    message.header.refreshToken = oldTokens.refreshToken;
+
+    let payload = this.buildPayload(Config.Endpoints.DEVICE_LIST, message);
+    let response = await request.post(payload);
+
+    let tokens = {
+      accessToken: response.header.accessToken,
+      refreshToken: response.header.refreshToken,
+    }
+
+    return tokens;
   }
 
   private async getStateId(): Promise<string> {
@@ -48,7 +52,7 @@ export class Authenticator extends Client {
     let response = await request.get(payload);
     let query = response.request.uri.query;
 
-    return query.match(this.stateIdRegex)[0];
+    return query.match(/(?<=state\=)(.*?)$/)[0];
   }
 
   private async authenticate(stateId: string, username: string, password: string): Promise<string> {
@@ -83,31 +87,11 @@ export class Authenticator extends Client {
     let response = await request.get(payload);
     let query = response.request.uri.query;
 
-    return query.match(this.authCodeRegex)[0];
+    return query.match(/(?<=code\=)(.*?)(?=\&)/)[0];
   }
 
-  private async getFinalResult(authCode: string): Promise<any> {
-    let message = {
-      header: {
-        result: false,
-        error_code: "",
-        error_text: "",
-        info_text: "",
-        message_version: "",
-        login_session_id: "",
-        trcode: Config.Endpoints.DEVICE_LIST,
-        accessToken: "",
-        refreshToken: ""
-      },
-      body: {
-        authCode: authCode,
-        isMobile: "M",
-        langCd: "en",
-        osType: 1,
-        redirectUrl: Config.Auth.REDIRECT_URL,
-        serviceCode: Config.Auth.SERVICE_CODE
-      }
-    }
+  private async getAccountStatus(authCode: string): Promise<any> {
+    let message = this.buildAccountPayloadMessage(authCode);
 
     let payload = this.buildPayload(Config.Endpoints.DEVICE_LIST, message);
     let response = await request.post(payload);
@@ -136,5 +120,31 @@ export class Authenticator extends Client {
     }
 
     return payload;
+  }
+
+  private buildAccountPayloadMessage(authCode?: string) {
+    let message = {
+      header: {
+        result: false,
+        error_code: "",
+        error_text: "",
+        info_text: "",
+        message_version: "",
+        login_session_id: "",
+        trcode: Config.Endpoints.DEVICE_LIST,
+        accessToken: "",
+        refreshToken: ""
+      },
+      body: {
+        authCode: (authCode ? authCode : ""),
+        isMobile: "M",
+        langCd: "en",
+        osType: 1,
+        redirectUrl: Config.Auth.REDIRECT_URL,
+        serviceCode: Config.Auth.SERVICE_CODE
+      }
+    }
+
+    return message;
   }
 }
