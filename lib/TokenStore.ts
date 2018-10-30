@@ -6,7 +6,6 @@ import { TokenPair } from './types';
 
 export class TokenStore {
   static readonly TOKEN_KEY = 'tokens';
-  static readonly CREDENTIAL_KEY = 'credentials';
   static readonly TOKEN_EXP_LENGTH = 3600000;
 
   saveTokens(tokens: TokenPair): void {
@@ -22,7 +21,7 @@ export class TokenStore {
       return tokens;
     }
 
-    Logger.log('Auth tokens are expired, refreshing...');
+    Logger.debug('Auth tokens are expired, refreshing...');
 
     try {
       let authenticator = new Authenticator();
@@ -30,8 +29,7 @@ export class TokenStore {
 
       this.saveTokens(newTokens);
 
-      Logger.log('Token refresh succeeded!');
-      Logger.debug('New tokens', newTokens); // remove
+      Logger.debug('Token refresh succeeded');
 
       return newTokens;
     } catch(e) {
