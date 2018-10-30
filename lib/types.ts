@@ -13,7 +13,7 @@ export namespace Request {
 
   export interface Message {
     header: MessageHeader
-    body: object
+    body: any
   }
 
   export interface Payload {

@@ -51,47 +51,45 @@ export class Client {
     let value = on ? '1' : '0';
     let payload = await this.buildControlPayload(id, Config.Codes.POWER, value);
 
-    try {
-      await this.sendRequest(payload);
-    } catch(e) {
-      Logger.log(`Unable to set power: ${e}`);
-    }
+    await this.sendControlRequest(id, payload);
   }
 
   async setMode(id: string, auto: boolean): Promise<void> {
     let value = auto ? '1' : '2';
     let payload = await this.buildControlPayload(id, Config.Codes.MODE, value);
 
-    try {
-      await this.sendRequest(payload);
-    } catch(e) {
-      Logger.log(`Unable to set mode: ${e}`);
-    }
+    await this.sendControlRequest(id, payload);
   }
 
   async setFanSpeed(id: string, speed: number): Promise<void> {
     let value = speed.toString();
     let payload = await this.buildControlPayload(id, Config.Codes.FAN, value);
 
-    try {
-      await this.sendRequest(payload);
-    } catch(e) {
-      Logger.log(`Unable to set fan speed: ${e}`);
-    }
+    await this.sendControlRequest(id, payload);
   }
 
   async setLight(id: string, on: boolean): Promise<void> {
     let value = on ? '2' : '0';
     let payload = await this.buildControlPayload(id, Config.Codes.LIGHT, value);
 
-    try {
-      await this.sendRequest(payload);
-    } catch(e) {
-      Logger.log(`Unable to set light: ${e}`);
-    }
+    await this.sendControlRequest(id, payload);
   }
 
-  private async buildStatusPayload(id: string, endpoint: string): Promise<Request.Payload> {
+  private async sendControlRequest(id: string, payload: Request.Payload): Promise<void> {
+    await this.sendRequest(payload);
+    await this.refreshStatus(id);
+  }
+
+  private async refreshStatus(id: string): Promise<void> {
+    let message = await this.buildStatusMessage(id, Config.Endpoints.CONTROL);
+    message.body.refreshFlag = true;
+
+    let payload = this.buildPayload(Config.Endpoints.CONTROL, message);
+
+    await this.sendRequest(payload);
+  }
+
+  private async buildStatusMessage(id: string, endpoint: string): Promise<Request.Message> {
     let messageHeader: Request.MessageHeader = await this.buildMessageHeader(endpoint);
 
     let message: Request.Message = {
@@ -106,6 +104,11 @@ export class Client {
       }
     }
 
+    return message;
+  }
+
+  private async buildStatusPayload(id: string, endpoint: string): Promise<Request.Payload> {
+    let message = await this.buildStatusMessage(id, endpoint);
     let payload = this.buildPayload(endpoint, message);
 
     return payload;
