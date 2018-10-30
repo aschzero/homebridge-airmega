@@ -1,9 +1,9 @@
-import { Client } from './Client';
-import { Purifier } from './Purifier';
-import { HAP, PurifierResponse } from './types';
-import { Logger } from './Logger';
-import { Deferred } from './Deferred';
-import { ServiceFactory } from './ServiceFactory';
+import { Client } from '../Client';
+import { Purifier } from '../Purifier';
+import { HAP, PurifierResponse } from '../types';
+import { Logger } from '../Logger';
+import { Deferred } from '../util/Deferred';
+import { ServiceFactory } from '../ServiceFactory';
 
 export class Service {
   purifier: Purifier;

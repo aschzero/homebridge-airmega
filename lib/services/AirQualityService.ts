@@ -1,6 +1,6 @@
-import { Hap } from './HAP';
+import { Hap } from '../HAP';
 import { Service } from './Service';
-import { HAP, PurifierResponse } from './types';
+import { HAP, PurifierResponse } from '../types';
 
 export class AirQualityService extends Service {
 

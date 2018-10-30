@@ -1,9 +1,9 @@
-import { AirQualityService } from './AirQualityService';
-import { FilterService } from './FilterService';
-import { LightService } from './LightService';
 import { Purifier } from './Purifier';
-import { PurifierService } from './PurifierService';
-import { Service } from './Service';
+import { AirQualityService } from './services/AirQualityService';
+import { FilterService } from './services/FilterService';
+import { LightService } from './services/LightService';
+import { PurifierService } from './services/PurifierService';
+import { Service } from './services/Service';
 import { HAP } from './types';
 
 export class ServiceFactory {
