@@ -94,8 +94,8 @@ export class PurifierService extends Service {
         return;
       }
 
-      if (status.state == PurifierResponse.State.Sleep ||
-          status.state == PurifierResponse.State.AutoSleep) {
+      if (status.mode == PurifierResponse.Mode.Sleep ||
+          status.mode == PurifierResponse.Mode.AutoSleep) {
         callback(null, Hap.Characteristic.CurrentAirPurifierState.IDLE);
         return;
       }
@@ -111,7 +111,7 @@ export class PurifierService extends Service {
     try {
       let status = await this.purifier.waitForStatusUpdate();
 
-      if (status.state == PurifierResponse.State.Auto) {
+      if (status.mode == PurifierResponse.Mode.Auto) {
         callback(null, Hap.Characteristic.TargetAirPurifierState.AUTO);
       } else {
         callback(null, Hap.Characteristic.TargetAirPurifierState.MANUAL);
@@ -127,9 +127,9 @@ export class PurifierService extends Service {
       await this.client.setMode(this.purifier.id, targetState);
 
       if (targetState) {
-        this.purifier.state = PurifierResponse.State.Auto;
+        this.purifier.mode = PurifierResponse.Mode.Auto;
       } else {
-        this.purifier.state = PurifierResponse.State.Manual;
+        this.purifier.mode = PurifierResponse.Mode.Manual;
       }
 
       callback(null);

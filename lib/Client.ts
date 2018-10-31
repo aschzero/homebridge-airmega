@@ -22,7 +22,7 @@ export class Client {
       power: statusResponse.power,
       light: statusResponse.light,
       fan: statusResponse.airVolume,
-      state: statusResponse.prodMode,
+      mode: statusResponse.prodMode,
       airQuality: statusResponse.dustPollution
     }
 

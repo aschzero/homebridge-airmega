@@ -9,7 +9,7 @@ export class Purifier {
   power: PurifierResponse.Power;
   light: PurifierResponse.Light;
   fan: PurifierResponse.Fan;
-  state: PurifierResponse.State;
+  mode: PurifierResponse.Mode;
   airQuality: PurifierResponse.AirQuality;
 
   client: Client;
@@ -30,7 +30,7 @@ export class Purifier {
     this.power = status.power;
     this.light = status.light;
     this.fan = status.fan;
-    this.state = status.state;
+    this.mode = status.mode;
     this.airQuality = status.airQuality;
   }
 

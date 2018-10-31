@@ -63,7 +63,7 @@ export namespace PurifierResponse {
     High = '3'
   }
 
-  export enum State {
+  export enum Mode {
     Manual = '0',
     Auto = '1',
     Sleep = '2',
@@ -81,7 +81,7 @@ export namespace PurifierResponse {
     power: Power
     light: Light
     fan: Fan
-    state: State
+    mode: Mode
     airQuality: AirQuality
   }
 
