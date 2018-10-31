@@ -6,7 +6,7 @@ default: build run
 debug: build node_debug
 
 build:
-	tsc
+	tsc --noUnusedLocals --noUnusedParameters
 
 run:
 	$(HOMEBRIDGE) -D -U $(PWD)/.homebridge -P $(PWD)
