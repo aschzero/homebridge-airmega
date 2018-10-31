@@ -10,26 +10,26 @@ export class Service {
   accessory: HAP.Accessory;
   client: Client;
 
-  deferredStatus: Deferred<PurifierResponse.Status>;
+  deferredStatus: Deferred<void>;
 
   constructor(purifier: Purifier, accessory: HAP.Accessory) {
     this.client = new Client();
+    this.deferredStatus = new Deferred<void>();
 
     this.purifier = purifier;
     this.accessory = accessory;
   }
 
   async updateStatus() {
-    ServiceFactory.services.forEach(service => {
-      service.deferredStatus = new Deferred<PurifierResponse.Status>();
-    });
-
     try {
       let status = await this.client.getStatus(this.purifier.id);
       this.purifier.setStatus(status);
 
       ServiceFactory.services.forEach(service => {
-        service.deferredStatus.resolve(status);
+        service.deferredStatus.resolve();
+        setTimeout(() => {
+          service.deferredStatus = new Deferred<void>();
+        }, 1000);
       });
 
       return status;

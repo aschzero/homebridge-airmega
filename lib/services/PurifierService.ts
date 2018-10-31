@@ -85,7 +85,7 @@ export class PurifierService extends Service {
     try {
       await this.deferredStatus;
 
-      if (!this.purifier.power) {
+      if (this.purifier.power == PurifierResponse.Power.Off) {
         callback(null, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
         return;
       }
