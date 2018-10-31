@@ -30,12 +30,9 @@ export class LightService extends Service {
   }
 
   async setLightIndicator(targetState, callback): Promise<void> {
-    Logger.log(this.purifier.name, `light turning ${(targetState ? 'on' : 'off')}...`);
-
     try {
       await this.client.setLight(this.purifier.id, targetState);
 
-      Logger.log(this.purifier.name, `light is ${(targetState ? 'on' : 'off')}`);
       callback(null);
     } catch(e) {
       Logger.error('Unable to control light', e);
