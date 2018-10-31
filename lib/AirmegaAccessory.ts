@@ -2,8 +2,8 @@ import { Client } from './Client';
 import { Hap } from './HAP';
 import { Logger } from './Logger';
 import { Purifier } from './Purifier';
-import { HAP, PurifierResponse } from './types';
 import { ServiceFactory } from './ServiceFactory';
+import { HAP } from './types';
 
 export class AirmegaAccessory {
   client: Client;

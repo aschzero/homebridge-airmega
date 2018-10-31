@@ -3,7 +3,6 @@ import { AirQualityService } from './services/AirQualityService';
 import { FilterService } from './services/FilterService';
 import { LightService } from './services/LightService';
 import { PurifierService } from './services/PurifierService';
-import { Service } from './services/Service';
 import { HAP } from './types';
 
 export class ServiceFactory {
