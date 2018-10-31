@@ -28,8 +28,8 @@ export class Service {
       let status = await this.client.getStatus(this.purifier.id);
       this.purifier.setStatus(status);
 
-      ServiceFactory.services.forEach(s => {
-        s.deferredStatus.resolve(status);
+      ServiceFactory.services.forEach(service => {
+        service.deferredStatus.resolve(status);
       });
 
       return status;

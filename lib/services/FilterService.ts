@@ -9,8 +9,6 @@ export class FilterService extends Service {
   mainFilterStatus: PurifierResponse.FilterStatus;
 
   registerServices(): void {
-    this.updateFilterStatus();
-
     this.getOrCreateMainFilterService();
     this.getOrCreatePreFilterService();
 
