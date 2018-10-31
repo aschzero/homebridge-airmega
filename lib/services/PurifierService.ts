@@ -39,9 +39,9 @@ export class PurifierService extends Service {
 
   async getActiveState(callback): Promise<void> {
     try {
-      await this.deferredStatus;
+      let status = await this.purifier.waitForStatusUpdate();
 
-      if (this.purifier.power) {
+      if (status.power == PurifierResponse.Power.On) {
         callback(null, Hap.Characteristic.Active.ACTIVE);
       } else {
         callback(null, Hap.Characteristic.Active.INACTIVE);
@@ -68,9 +68,13 @@ export class PurifierService extends Service {
 
       if (targetState) {
         this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
+
+        this.purifier.power = PurifierResponse.Power.On;
         lightService.getCharacteristic(Hap.Characteristic.On).updateValue(true);
       } else {
         this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
+
+        this.purifier.power = PurifierResponse.Power.Off;
         lightService.getCharacteristic(Hap.Characteristic.On).updateValue(false);
       }
 
@@ -83,14 +87,15 @@ export class PurifierService extends Service {
 
   async getCurrentAirPurifierState(callback): Promise<void> {
     try {
-      await this.deferredStatus;
+      let status = await this.purifier.waitForStatusUpdate();
 
-      if (this.purifier.power == PurifierResponse.Power.Off) {
+      if (status.power == PurifierResponse.Power.Off) {
         callback(null, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
         return;
       }
 
-      if (this.purifier.state == PurifierResponse.State.Sleep || this.purifier.state == PurifierResponse.State.AutoSleep) {
+      if (status.state == PurifierResponse.State.Sleep ||
+          status.state == PurifierResponse.State.AutoSleep) {
         callback(null, Hap.Characteristic.CurrentAirPurifierState.IDLE);
         return;
       }
@@ -104,9 +109,9 @@ export class PurifierService extends Service {
 
   async getTargetPurifierState(callback): Promise<void> {
     try {
-      await this.updateStatus();
+      let status = await this.purifier.waitForStatusUpdate();
 
-      if (this.purifier.state == PurifierResponse.State.Auto) {
+      if (status.state == PurifierResponse.State.Auto) {
         callback(null, Hap.Characteristic.TargetAirPurifierState.AUTO);
       } else {
         callback(null, Hap.Characteristic.TargetAirPurifierState.MANUAL);
@@ -136,10 +141,10 @@ export class PurifierService extends Service {
 
   async getRotationSpeed(callback): Promise<void> {
     try {
-      await this.deferredStatus;
+      let status = await this.purifier.waitForStatusUpdate();
 
       let intervals = {1: 20, 2: 50, 3: 100};
-      let fanSpeed = intervals[this.purifier.fan];
+      let fanSpeed = intervals[status.fan];
 
       callback(null, fanSpeed);
     } catch(e) {

@@ -22,9 +22,9 @@ export class AirQualityService extends Service {
     let result;
 
     try {
-      await this.deferredStatus;
+      let status = await this.purifier.waitForStatusUpdate();
 
-      switch (this.purifier.airQuality) {
+      switch (status.airQuality) {
         case PurifierResponse.AirQuality.Excellent:
           result = Hap.Characteristic.AirQuality.EXCELLENT;
           break;

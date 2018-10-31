@@ -7,8 +7,6 @@ import { Service } from './services/Service';
 import { HAP } from './types';
 
 export class ServiceFactory {
-  static services: Service[];
-
   purifierService: PurifierService;
   airQualityService: AirQualityService;
   filterService: FilterService;
@@ -19,13 +17,6 @@ export class ServiceFactory {
     this.airQualityService = new AirQualityService(purifier, accessory);
     this.filterService = new FilterService(purifier, accessory);
     this.lightService = new LightService(purifier, accessory);
-
-    ServiceFactory.services = [
-      this.purifierService,
-      this.airQualityService,
-      this.filterService,
-      this.lightService
-    ];
   }
 
   registerServices(): void {

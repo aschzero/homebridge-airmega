@@ -24,9 +24,9 @@ export class LightService extends Service {
   }
 
   async getLightIndicator(callback): Promise<void> {
-    await this.deferredStatus;
+    let status = await this.purifier.waitForStatusUpdate();
 
-    callback(null, this.purifier.light == PurifierResponse.Light.On);
+    callback(null, status.light == PurifierResponse.Light.On);
   }
 
   async setLightIndicator(targetState, callback): Promise<void> {
