@@ -8,8 +8,7 @@ import { HAP } from './types';
 
 export class AirmegaPlatform {
   platform: HAP.Platform;
-  accessories: Array<HAP.Accessory>;
-  registeredAccessories: Map<string, HAP.Accessory>;
+  accessories: HAP.Accessory[];
   log: HAP.Log;
 
   constructor(log: HAP.Log, config: HAP.AccessoryConfig, platform: HAP.Platform) {
@@ -17,7 +16,6 @@ export class AirmegaPlatform {
 
     this.platform = platform;
     this.accessories = [];
-    this.registeredAccessories = new Map<string, HAP.Accessory>();
 
     if (!this.platform) return;
 
@@ -26,7 +24,7 @@ export class AirmegaPlatform {
       let password = config['password'];
 
       if (!username || !password) {
-        throw Error('username and password fields are required in config');
+        throw Error('Username and password fields are required in config');
       }
 
       try {
@@ -49,12 +47,9 @@ export class AirmegaPlatform {
       return;
     }
 
-    Logger.log('Retrieving purifiers...');
-
     try {
       authenticator.listPurifiers().forEach(purifier => {
-        let accessory = this.addAccessory(purifier);
-        new AirmegaAccessory(accessory, purifier);
+        this.registerAccessory(purifier);
       });
     } catch(e) {
       Logger.error('Unable to retrieve purifiers', e);
@@ -62,25 +57,23 @@ export class AirmegaPlatform {
     }
   }
 
-  addAccessory(purifier: Purifier): HAP.Accessory {
+  registerAccessory(purifier: Purifier): void {
     let uuid: string = Hap.UUIDGen.generate(purifier.name);
     let accessory: HAP.Accessory;
 
-    if (this.registeredAccessories.get(uuid)) {
-      accessory = this.registeredAccessories.get(uuid);
+    if (this.accessories[uuid]) {
+      accessory = this.accessories[uuid];
     } else {
       accessory = new Hap.Accessory(purifier.name, uuid);
 
       this.platform.registerPlatformAccessories('homebridge-airmega', 'Airmega', [accessory]);
     }
 
-    this.accessories.push(accessory);
-
-    return accessory;
+    new AirmegaAccessory(accessory, purifier);
+    this.accessories[uuid] = accessory;
   }
 
   configureAccessory(accessory: HAP.Accessory): void {
-    accessory.reachability = false;
-    this.registeredAccessories.set(accessory.UUID, accessory);
+    this.accessories[accessory.UUID] = accessory;
   }
 }
