@@ -10,14 +10,14 @@ import { HAP } from './types';
 
 export class AirmegaPlatform {
   platform: HAP.Platform;
-  accessories: HAP.Accessory[];
+  accessories: Map<string, HAP.Accessory>;
   log: HAP.Log;
 
   constructor(log: HAP.Log, config: HAP.AccessoryConfig, platform: HAP.Platform) {
     Logger.setLogger(log, config['debug']);
 
     this.platform = platform;
-    this.accessories = [];
+    this.accessories = new Map<string, HAP.Accessory>();
 
     if (!this.platform) return;
 
@@ -60,18 +60,16 @@ export class AirmegaPlatform {
   }
 
   configureAccessory(accessory: HAP.Accessory): void {
-    this.accessories[accessory.UUID] = accessory;
+    this.accessories.set(accessory.UUID, accessory);
   }
 
   registerAccessory(purifier: Purifier): void {
     let uuid: string = Hap.UUIDGen.generate(purifier.name);
-    let accessory: HAP.Accessory;
+    let accessory = this.accessories.get(uuid);
 
-    if (this.accessories[uuid]) {
-      accessory = this.accessories[uuid];
-    } else {
+    if (!accessory) {
       accessory = new Hap.Accessory(purifier.name, uuid);
-      this.accessories[accessory.UUID] = accessory;
+      this.accessories.set(accessory.UUID, accessory);
 
       this.platform.registerPlatformAccessories('homebridge-airmega', 'Airmega', [accessory]);
     }
