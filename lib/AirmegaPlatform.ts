@@ -1,9 +1,11 @@
 import { Authenticator } from './Authenticator';
 import { Hap } from './HAP';
 import { Logger } from './Logger';
-import { AirmegaAccessory } from './AirmegaAccessory';
 import { Purifier } from './Purifier';
-
+import { AirQualityAccessory } from './accessories/AirQualityAccessory';
+import { FilterAccessory } from './accessories/FilterAccessory';
+import { LightAccessory } from './accessories/LightAccessory';
+import { PurifierAccessory } from './accessories/PurifierAccessory';
 import { HAP } from './types';
 
 export class AirmegaPlatform {
@@ -57,6 +59,10 @@ export class AirmegaPlatform {
     }
   }
 
+  configureAccessory(accessory: HAP.Accessory): void {
+    this.accessories[accessory.UUID] = accessory;
+  }
+
   registerAccessory(purifier: Purifier): void {
     let uuid: string = Hap.UUIDGen.generate(purifier.name);
     let accessory: HAP.Accessory;
@@ -65,15 +71,32 @@ export class AirmegaPlatform {
       accessory = this.accessories[uuid];
     } else {
       accessory = new Hap.Accessory(purifier.name, uuid);
+      this.accessories[accessory.UUID] = accessory;
 
       this.platform.registerPlatformAccessories('homebridge-airmega', 'Airmega', [accessory]);
     }
 
-    new AirmegaAccessory(accessory, purifier);
-    this.accessories[uuid] = accessory;
+    this.registerAccessories(purifier, accessory);
   }
 
-  configureAccessory(accessory: HAP.Accessory): void {
-    this.accessories[accessory.UUID] = accessory;
+  registerAccessories(purifier: Purifier, accessory: HAP.Accessory): void {
+    accessory.getService(Hap.Service.AccessoryInformation)
+      .setCharacteristic(Hap.Characteristic.Manufacturer, 'Coway')
+      .setCharacteristic(Hap.Characteristic.Model, 'Airmega')
+      .setCharacteristic(Hap.Characteristic.SerialNumber, purifier.id);
+
+    let purifierAccessory = new PurifierAccessory(purifier, accessory);
+    purifierAccessory.registerServices();
+
+    let airQualityAccessory = new AirQualityAccessory(purifier, accessory);
+    airQualityAccessory.registerServices();
+
+    let filterAccessory = new FilterAccessory(purifier, accessory);
+    filterAccessory.registerServices();
+
+    let lightAccessory = new LightAccessory(purifier, accessory);
+    lightAccessory.registerServices();
+
+    Logger.log(`Created accessories for ${purifier.name}`);
   }
 }

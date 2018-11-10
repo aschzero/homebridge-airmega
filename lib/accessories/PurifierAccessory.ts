@@ -1,9 +1,9 @@
 import { Hap } from '../HAP';
 import { Logger } from '../Logger';
 import { HAP, PurifierResponse } from '../types';
-import { Service } from './Service';
+import { BaseAccessory } from './BaseAccessory';
 
-export class PurifierService extends Service {
+export class PurifierAccessory extends BaseAccessory {
   purifierService: HAP.Service;
 
   registerServices(): HAP.Service {

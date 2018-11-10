@@ -1,10 +1,10 @@
 import { Config } from '../Config';
 import { Hap } from '../HAP';
 import { Logger } from '../Logger';
-import { Service } from './Service';
+import { BaseAccessory } from './BaseAccessory';
 import { HAP, PurifierResponse } from '../types';
 
-export class FilterService extends Service {
+export class FilterAccessory extends BaseAccessory {
   preFilterStatus: PurifierResponse.FilterStatus;
   mainFilterStatus: PurifierResponse.FilterStatus;
 
