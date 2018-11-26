@@ -25,27 +25,36 @@ npm install -g homebridge-airmega
 
 ## Configuration
 
-Example homebridge configuration file:
+Add the following to your homebridge config:
 
 ```
-{
-  "bridge": {
-    "name": "Homebridge",
-    "username": "XX:XX:XX:XX:XX:XX",
-    "port": 51826,
-    "pin": "XXX-XX-XXX"
-  },
-  "platforms": [
-    {
-      "platform": "Airmega",
-      "username": "myusername",
-      "password": "password123"
-    }
-  ]
-}
+"platforms": [
+  {
+    "platform": "Airmega",
+    "username": "myusername",
+    "password": "password123"
+  }
+]
 ```
 
-The plugin will discover all connected purifiers when homebridge is restarted.
+### Excluding Accessories
+
+You can optionally prevent some accessories from being created by using the `exclude` option in your config (note: only the lightbulb accessory supports exclusion for now).
+
+Example:
+
+```
+"platforms": [
+  {
+    "platform": "Airmega",
+    "username": "myusername",
+    "password": "password123",
+    "exclude": [
+      "lightbulb"
+    ]
+  }
+]
+```
 
 ### Authentication
 
