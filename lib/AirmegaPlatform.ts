@@ -2,10 +2,10 @@ import { Authenticator } from './Authenticator';
 import { Hap } from './HAP';
 import { Logger } from './Logger';
 import { Purifier } from './Purifier';
-import { AirQualityAccessory } from './accessories/AirQualityAccessory';
-import { FilterAccessory } from './accessories/FilterAccessory';
-import { LightAccessory } from './accessories/LightAccessory';
-import { PurifierAccessory } from './accessories/PurifierAccessory';
+import { AirQualityService } from './services/AirQualityService';
+import { FilterService } from './services/FilterService';
+import { LightbulbService } from './services/LightbulbService';
+import { PurifierService } from './services/PurifierService';
 import { HAP } from './types';
 
 export class AirmegaPlatform {

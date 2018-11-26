@@ -1,12 +1,12 @@
 import { Hap } from '../HAP';
 import { Logger } from '../Logger';
 import { HAP, PurifierResponse } from '../types';
-import { BaseAccessory } from './BaseAccessory';
+import { Service } from './Service';
 
-export class PurifierAccessory extends BaseAccessory {
+export class PurifierService extends Service {
   purifierService: HAP.Service;
 
-  registerServices(): HAP.Service {
+  register(): HAP.Service {
     this.purifierService = this.getOrCreatePurifierService();
 
     this.purifierService.getCharacteristic(Hap.Characteristic.Active)
@@ -61,21 +61,21 @@ export class PurifierAccessory extends BaseAccessory {
       return;
     }
 
-    let lightService = this.accessory.getService(Hap.Service.Lightbulb);
-
     try {
       await this.client.setPower(this.purifier.id, targetState);
 
       if (targetState) {
         this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
-
         this.purifier.power = PurifierResponse.Power.On;
-        lightService.getCharacteristic(Hap.Characteristic.On).updateValue(true);
       } else {
         this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
-
         this.purifier.power = PurifierResponse.Power.Off;
-        lightService.getCharacteristic(Hap.Characteristic.On).updateValue(false);
+      }
+
+      // Update light accessory to accurately reflect new state after toggling power
+      let lightService = this.accessory.getService(Hap.Service.Lightbulb);
+      if (lightService) {
+        lightService.getCharacteristic(Hap.Characteristic.On).updateValue(targetState);
       }
 
       callback(null);

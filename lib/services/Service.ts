@@ -2,7 +2,7 @@ import { Client } from '../Client';
 import { Purifier } from '../Purifier';
 import { HAP } from '../types';
 
-export class BaseAccessory {
+export class Service {
   purifier: Purifier;
   accessory: HAP.Accessory;
   client: Client;

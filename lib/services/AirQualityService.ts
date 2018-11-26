@@ -1,11 +1,11 @@
 import { Hap } from '../HAP';
-import { BaseAccessory } from './BaseAccessory';
+import { Service } from './Service';
 import { HAP, PurifierResponse } from '../types';
 import { Logger } from '../Logger';
 
-export class AirQualityAccessory extends BaseAccessory {
+export class AirQualityService extends Service {
 
-  registerServices(): HAP.Service {
+  register(): HAP.Service {
     let airQualityService = this.accessory.getService(Hap.Service.AirQualitySensor);
 
     if (!airQualityService) {

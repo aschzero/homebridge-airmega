@@ -1,14 +1,14 @@
 import { Config } from '../Config';
 import { Hap } from '../HAP';
 import { Logger } from '../Logger';
-import { BaseAccessory } from './BaseAccessory';
+import { Service } from './Service';
 import { HAP, PurifierResponse } from '../types';
 
-export class FilterAccessory extends BaseAccessory {
+export class FilterService extends Service {
   preFilterStatus: PurifierResponse.FilterStatus;
   mainFilterStatus: PurifierResponse.FilterStatus;
 
-  registerServices(): void {
+  register(): void {
     this.getOrCreateMainFilterService();
     this.getOrCreatePreFilterService();
 

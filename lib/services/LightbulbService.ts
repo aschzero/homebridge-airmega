@@ -1,11 +1,11 @@
 import { Hap } from '../HAP';
 import { Logger } from '../Logger';
-import { BaseAccessory } from './BaseAccessory';
+import { Service } from './Service';
 import { HAP, PurifierResponse } from '../types';
 
-export class LightAccessory extends BaseAccessory {
+export class LightbulbService extends Service {
 
-  registerServices(): void {
+  register(): void {
     let lightService = this.getOrCreateLightbulbService();
 
     lightService.getCharacteristic(Hap.Characteristic.On)
