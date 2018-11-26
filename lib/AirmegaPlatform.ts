@@ -29,41 +29,25 @@ export class AirmegaPlatform {
         throw Error('Username and password fields are required in config');
       }
 
+      Logger.log('Authenticating...');
+
       try {
-        this.retrievePurifiers(username, password);
+        let authenticator = new Authenticator();
+
+        authenticator.login(username, password).then(purifiers => {
+          purifiers.forEach(purifier => this.registerAccessory(purifier, config));
+        });
       } catch(e) {
-        Logger.error('Unable to retrieve purifiers', e);
+        Logger.error('Unable to authenticate', e);
       }
     });
-  }
-
-  async retrievePurifiers(username: string, password: string): Promise<void> {
-    let authenticator = new Authenticator();
-
-    Logger.log('Authenticating...');
-
-    try {
-      await authenticator.login(username, password);
-    } catch(e) {
-      Logger.error('Unable to login', e);
-      return;
-    }
-
-    try {
-      authenticator.listPurifiers().forEach(purifier => {
-        this.registerAccessory(purifier);
-      });
-    } catch(e) {
-      Logger.error('Unable to retrieve purifiers', e);
-      return;
-    }
   }
 
   configureAccessory(accessory: HAP.Accessory): void {
     this.accessories.set(accessory.UUID, accessory);
   }
 
-  registerAccessory(purifier: Purifier): void {
+  registerAccessory(purifier: Purifier, config: HAP.AccessoryConfig): void {
     let uuid: string = Hap.UUIDGen.generate(purifier.name);
     let accessory = this.accessories.get(uuid);
 
@@ -74,27 +58,44 @@ export class AirmegaPlatform {
       this.platform.registerPlatformAccessories('homebridge-airmega', 'Airmega', [accessory]);
     }
 
-    this.registerAccessories(purifier, accessory);
+    this.registerServices(purifier, accessory, config);
+
+    Logger.log(`Found ${purifier.name}`);
   }
 
-  registerAccessories(purifier: Purifier, accessory: HAP.Accessory): void {
+  registerServices(purifier: Purifier, accessory: HAP.Accessory, config: HAP.AccessoryConfig): void {
     accessory.getService(Hap.Service.AccessoryInformation)
       .setCharacteristic(Hap.Characteristic.Manufacturer, 'Coway')
       .setCharacteristic(Hap.Characteristic.Model, 'Airmega')
       .setCharacteristic(Hap.Characteristic.SerialNumber, purifier.id);
 
-    let purifierAccessory = new PurifierAccessory(purifier, accessory);
-    purifierAccessory.registerServices();
+    let purifierService = new PurifierService(purifier, accessory);
+    let airQualityService = new AirQualityService(purifier, accessory);
+    let lightService = new LightbulbService(purifier, accessory);
+    let filterService = new FilterService(purifier, accessory);
 
-    let airQualityAccessory = new AirQualityAccessory(purifier, accessory);
-    airQualityAccessory.registerServices();
+    purifierService.register();
+    airQualityService.register();
+    filterService.register();
 
-    let filterAccessory = new FilterAccessory(purifier, accessory);
-    filterAccessory.registerServices();
+    if (this.shouldExcludeAccessory(config, 'lightbulb')) {
+      this.removeService(accessory, Hap.Service.Lightbulb);
+    } else {
+      lightService.register();
+    }
+  }
 
-    let lightAccessory = new LightAccessory(purifier, accessory);
-    lightAccessory.registerServices();
+  shouldExcludeAccessory(config: HAP.AccessoryConfig, name: string) {
+    if (!config.hasOwnProperty('exclude')) return false;
 
-    Logger.log(`Created accessories for ${purifier.name}`);
+    return config['exclude'].includes(name);
+  }
+
+  removeService(accessory: HAP.Accessory, service: HAP.Service): void {
+    accessory.services.forEach(existingService => {
+      if (existingService.UUID == service.UUID) {
+        accessory.removeService(existingService);
+      }
+    });
   }
 }
