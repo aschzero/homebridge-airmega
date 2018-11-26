@@ -100,15 +100,18 @@ export namespace HAP {
   export interface Accessory {
     UUID: string;
     reachability: boolean;
+    services: Service[];
 
     on(...args: any[]): void;
     getService(...args: any[]): Service;
     addService(...args: any[]): Service;
+    removeService(...args: any[]): void;
     getServiceByUUIDAndSubType(...args: any[]): Service;
     updateReachability(reachable: boolean): void;
   }
 
   export interface Service {
+    UUID: string;
     AccessoryInformation: void;
 
     setCharacteristic(...args: any[]): Service;

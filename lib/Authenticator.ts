@@ -9,7 +9,7 @@ import { AesUtil, CryptoJS } from './util/aes';
 export class Authenticator extends Client {
   result: any;
 
-  async login(username: string, password: string): Promise<void> {
+  async login(username: string, password: string): Promise<Purifier[]> {
     let stateId = await this.getStateId();
     let cookies = await this.authenticate(stateId, username, password);
     let authCode = await this.getAuthCode(cookies);
@@ -20,9 +20,7 @@ export class Authenticator extends Client {
       accessToken: this.result.header.accessToken,
       refreshToken: this.result.header.refreshToken,
     });
-  }
 
-  listPurifiers(): Purifier[] {
     let purifiers = this.result.body.deviceInfos.map(device => {
       return new Purifier(device.barcode, device.dvcNick);
     });
