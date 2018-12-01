@@ -1,37 +1,36 @@
-import { Hap } from '../HAP';
 import { Logger } from '../Logger';
-import { HAP, PurifierResponse } from '../types';
-import { Service } from './Service';
+import { PurifierResponse } from '../types';
+import { AbstractService } from './AbstractService';
+import { HAP } from '../HAP';
+import { Service } from '../interfaces/HAP';
 
-export class PurifierService extends Service {
-  purifierService: HAP.Service;
+export class PurifierService extends AbstractService {
+  purifierService: Service;
 
-  register(): HAP.Service {
+  register(): void {
     this.purifierService = this.getOrCreatePurifierService();
 
-    this.purifierService.getCharacteristic(Hap.Characteristic.Active)
+    this.purifierService.getCharacteristic(HAP.Characteristic.Active)
       .on('get', this.getActiveState.bind(this))
       .on('set', this.setActiveState.bind(this));
 
-    this.purifierService.getCharacteristic(Hap.Characteristic.CurrentAirPurifierState)
+    this.purifierService.getCharacteristic(HAP.Characteristic.CurrentAirPurifierState)
       .on('get', this.getCurrentAirPurifierState.bind(this));
 
-    this.purifierService.getCharacteristic(Hap.Characteristic.TargetAirPurifierState)
+    this.purifierService.getCharacteristic(HAP.Characteristic.TargetAirPurifierState)
       .on('get', this.getTargetPurifierState.bind(this))
       .on('set', this.setTargetPurifierState.bind(this));
 
-    this.purifierService.getCharacteristic(Hap.Characteristic.RotationSpeed)
+    this.purifierService.getCharacteristic(HAP.Characteristic.RotationSpeed)
       .on('get', this.getRotationSpeed.bind(this))
       .on('set', this.setRotationSpeed.bind(this));
-
-    return this.purifierService;
   }
 
-  getOrCreatePurifierService(): HAP.Service {
-    let purifierService = this.accessory.getService(Hap.Service.AirPurifier);
+  getOrCreatePurifierService(): Service {
+    let purifierService = this.accessory.getService(HAP.Service.AirPurifier);
 
     if (!purifierService) {
-      purifierService = this.accessory.addService(Hap.Service.AirPurifier, this.purifier.name);
+      purifierService = this.accessory.addService(HAP.Service.AirPurifier, this.purifier.name);
     }
 
     return purifierService;
@@ -42,9 +41,9 @@ export class PurifierService extends Service {
       let status = await this.purifier.waitForStatusUpdate();
 
       if (status.power == PurifierResponse.Power.On) {
-        callback(null, Hap.Characteristic.Active.ACTIVE);
+        callback(null, HAP.Characteristic.Active.ACTIVE);
       } else {
-        callback(null, Hap.Characteristic.Active.INACTIVE);
+        callback(null, HAP.Characteristic.Active.INACTIVE);
       }
     } catch(e) {
       Logger.error('Unable to get active state', e);
@@ -65,17 +64,17 @@ export class PurifierService extends Service {
       await this.client.setPower(this.purifier.id, targetState);
 
       if (targetState) {
-        this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
+        this.purifierService.setCharacteristic(HAP.Characteristic.CurrentAirPurifierState, HAP.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
         this.purifier.power = PurifierResponse.Power.On;
       } else {
-        this.purifierService.setCharacteristic(Hap.Characteristic.CurrentAirPurifierState, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
+        this.purifierService.setCharacteristic(HAP.Characteristic.CurrentAirPurifierState, HAP.Characteristic.CurrentAirPurifierState.INACTIVE);
         this.purifier.power = PurifierResponse.Power.Off;
       }
 
       // Update light accessory to accurately reflect new state after toggling power
-      let lightService = this.accessory.getService(Hap.Service.Lightbulb);
+      let lightService = this.accessory.getService(HAP.Service.Lightbulb);
       if (lightService) {
-        lightService.getCharacteristic(Hap.Characteristic.On).updateValue(targetState);
+        lightService.getCharacteristic(HAP.Characteristic.On).updateValue(targetState);
       }
 
       callback(null);
@@ -90,17 +89,17 @@ export class PurifierService extends Service {
       let status = await this.purifier.waitForStatusUpdate();
 
       if (status.power == PurifierResponse.Power.Off) {
-        callback(null, Hap.Characteristic.CurrentAirPurifierState.INACTIVE);
+        callback(null, HAP.Characteristic.CurrentAirPurifierState.INACTIVE);
         return;
       }
 
       if (status.mode == PurifierResponse.Mode.Sleep ||
           status.mode == PurifierResponse.Mode.AutoSleep) {
-        callback(null, Hap.Characteristic.CurrentAirPurifierState.IDLE);
+        callback(null, HAP.Characteristic.CurrentAirPurifierState.IDLE);
         return;
       }
 
-      callback(null, Hap.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
+      callback(null, HAP.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
     } catch(e) {
       Logger.error('Unable to get current state', e);
       callback(e);
@@ -112,9 +111,9 @@ export class PurifierService extends Service {
       let status = await this.purifier.waitForStatusUpdate();
 
       if (status.mode == PurifierResponse.Mode.Auto) {
-        callback(null, Hap.Characteristic.TargetAirPurifierState.AUTO);
+        callback(null, HAP.Characteristic.TargetAirPurifierState.AUTO);
       } else {
-        callback(null, Hap.Characteristic.TargetAirPurifierState.MANUAL);
+        callback(null, HAP.Characteristic.TargetAirPurifierState.MANUAL);
       }
     } catch(e) {
       Logger.error('Unable to get target state', e);
@@ -173,8 +172,8 @@ export class PurifierService extends Service {
     try {
       await this.client.setFanSpeed(this.purifier.id, targetSpeed);
 
-      this.purifierService.getCharacteristic(Hap.Characteristic.TargetAirPurifierState)
-                          .updateValue(Hap.Characteristic.TargetAirPurifierState.MANUAL);
+      this.purifierService.getCharacteristic(HAP.Characteristic.TargetAirPurifierState)
+                          .updateValue(HAP.Characteristic.TargetAirPurifierState.MANUAL);
 
       callback(null);
     } catch(e) {

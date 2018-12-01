@@ -1,10 +1,10 @@
-import { HAP } from './types'
+import { Log } from "./interfaces/HAP";
 
 class AirmegaLogger {
-  public  log: HAP.Log;
+  public  log: Log;
   private debugMode: boolean;
 
-  setLogger(log: HAP.Log, debugMode: boolean): void {
+  setLogger(log: Log, debugMode: boolean): void {
     this.log = log;
     this.debugMode = debugMode;
   }

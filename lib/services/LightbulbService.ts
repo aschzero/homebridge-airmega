@@ -1,23 +1,24 @@
-import { Hap } from '../HAP';
+import { HAP } from '../HAP';
+import { Service } from '../interfaces/HAP';
 import { Logger } from '../Logger';
-import { Service } from './Service';
-import { HAP, PurifierResponse } from '../types';
+import { PurifierResponse } from '../types';
+import { AbstractService } from './AbstractService';
 
-export class LightbulbService extends Service {
+export class LightbulbService extends AbstractService {
 
   register(): void {
     let lightService = this.getOrCreateLightbulbService();
 
-    lightService.getCharacteristic(Hap.Characteristic.On)
+    lightService.getCharacteristic(HAP.Characteristic.On)
       .on('get', this.getLightIndicator.bind(this))
       .on('set', this.setLightIndicator.bind(this));
   }
 
-  getOrCreateLightbulbService(): HAP.Service {
-    let lightbulbService = this.accessory.getService(Hap.Service.Lightbulb);
+  getOrCreateLightbulbService(): Service {
+    let lightbulbService = this.accessory.getService(HAP.Service.Lightbulb);
 
     if (!lightbulbService) {
-      lightbulbService = this.accessory.addService(Hap.Service.Lightbulb, this.purifier.name);
+      lightbulbService = this.accessory.addService(HAP.Service.Lightbulb, this.purifier.name);
     }
 
     return lightbulbService;

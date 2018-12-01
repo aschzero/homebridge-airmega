@@ -1,10 +1,11 @@
 import { Config } from '../Config';
-import { Hap } from '../HAP';
+import { HAP } from '../HAP';
 import { Logger } from '../Logger';
-import { Service } from './Service';
-import { HAP, PurifierResponse } from '../types';
+import { PurifierResponse } from '../types';
+import { AbstractService } from './AbstractService';
+import { Service } from '../interfaces/HAP';
 
-export class FilterService extends Service {
+export class FilterService extends AbstractService {
   preFilterStatus: PurifierResponse.FilterStatus;
   mainFilterStatus: PurifierResponse.FilterStatus;
 
@@ -12,38 +13,38 @@ export class FilterService extends Service {
     this.getOrCreateMainFilterService();
     this.getOrCreatePreFilterService();
 
-    this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'main')
-      .getCharacteristic(Hap.Characteristic.FilterChangeIndication)
+    this.accessory.getServiceByUUIDAndSubType(HAP.Service.FilterMaintenance, 'main')
+      .getCharacteristic(HAP.Characteristic.FilterChangeIndication)
       .on('get', this.getMainFilterChangeIndication.bind(this));
 
-    this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'main')
-      .getCharacteristic(Hap.Characteristic.FilterLifeLevel)
+    this.accessory.getServiceByUUIDAndSubType(HAP.Service.FilterMaintenance, 'main')
+      .getCharacteristic(HAP.Characteristic.FilterLifeLevel)
       .on('get', this.getMainFilterLifeLevel.bind(this));
 
-    this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'pre')
-      .getCharacteristic(Hap.Characteristic.FilterChangeIndication)
+    this.accessory.getServiceByUUIDAndSubType(HAP.Service.FilterMaintenance, 'pre')
+      .getCharacteristic(HAP.Characteristic.FilterChangeIndication)
       .on('get', this.getPreFilterChangeIndication.bind(this));
 
-    this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'pre')
-      .getCharacteristic(Hap.Characteristic.FilterLifeLevel)
+    this.accessory.getServiceByUUIDAndSubType(HAP.Service.FilterMaintenance, 'pre')
+      .getCharacteristic(HAP.Characteristic.FilterLifeLevel)
       .on('get', this.getPreFilterLifeLevel.bind(this));
   }
 
-  getOrCreatePreFilterService(): HAP.Service {
-    let filterService = this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'pre');
+  getOrCreatePreFilterService(): Service {
+    let filterService = this.accessory.getServiceByUUIDAndSubType(HAP.Service.FilterMaintenance, 'pre');
 
     if (!filterService) {
-      filterService = this.accessory.addService(Hap.Service.FilterMaintenance, 'Pre Filter', 'pre');
+      filterService = this.accessory.addService(HAP.Service.FilterMaintenance, 'Pre Filter', 'pre');
     }
 
     return filterService;
   }
 
-  getOrCreateMainFilterService(): HAP.Service {
-    let filterService = this.accessory.getServiceByUUIDAndSubType(Hap.Service.FilterMaintenance, 'main');
+  getOrCreateMainFilterService(): Service {
+    let filterService = this.accessory.getServiceByUUIDAndSubType(HAP.Service.FilterMaintenance, 'main');
 
     if (!filterService) {
-      filterService = this.accessory.addService(Hap.Service.FilterMaintenance, 'Max 2 Filter', 'main');
+      filterService = this.accessory.addService(HAP.Service.FilterMaintenance, 'Max 2 Filter', 'main');
     }
 
     return filterService;
@@ -67,9 +68,9 @@ export class FilterService extends Service {
 
   async getPreFilterChangeIndication(callback) {
     if (this.preFilterStatus.lifeLevel <= 20) {
-      callback(null, Hap.Characteristic.FilterChangeIndication.CHANGE_FILTER);
+      callback(null, HAP.Characteristic.FilterChangeIndication.CHANGE_FILTER);
     } else {
-      callback(null, Hap.Characteristic.FilterChangeIndication.FILTER_OK);
+      callback(null, HAP.Characteristic.FilterChangeIndication.FILTER_OK);
     }
   }
 
@@ -79,9 +80,9 @@ export class FilterService extends Service {
 
   getMainFilterChangeIndication(callback) {
     if (this.mainFilterStatus.lifeLevel <= 20) {
-      callback(null, Hap.Characteristic.FilterChangeIndication.CHANGE_FILTER);
+      callback(null, HAP.Characteristic.FilterChangeIndication.CHANGE_FILTER);
     } else {
-      callback(null, Hap.Characteristic.FilterChangeIndication.FILTER_OK);
+      callback(null, HAP.Characteristic.FilterChangeIndication.FILTER_OK);
     }
   }
 

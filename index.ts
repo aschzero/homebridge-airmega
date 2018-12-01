@@ -1,11 +1,11 @@
 import { AirmegaPlatform } from './lib/AirmegaPlatform';
-import { Hap } from './lib/HAP';
+import { HAP } from './lib/HAP';
 
 export = (homebridge) => {
-  Hap.Accessory = homebridge.platformAccessory;
-  Hap.Service = homebridge.hap.Service;
-  Hap.Characteristic = homebridge.hap.Characteristic;
-  Hap.UUIDGen = homebridge.hap.uuid;
+  HAP.Accessory = homebridge.platformAccessory;
+  HAP.Service = homebridge.hap.Service;
+  HAP.Characteristic = homebridge.hap.Characteristic;
+  HAP.UUID = homebridge.hap.uuid;
 
   homebridge.registerPlatform('homebridge-airmega', 'Airmega', AirmegaPlatform, true);
 }

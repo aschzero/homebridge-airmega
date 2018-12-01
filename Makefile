@@ -3,7 +3,7 @@ PWD=$(shell pwd)
 
 default: build run
 
-debug: build node_debug
+debug: build inspect
 
 build:
 	tsc --noUnusedLocals --noUnusedParameters
@@ -11,8 +11,8 @@ build:
 run:
 	$(HOMEBRIDGE) -D -U $(PWD)/.homebridge -P $(PWD)
 
-node_debug:
-	node --inspect-brk $(HOMEBRIDGE) -D -U $(PWD)/.homebridge
+inspect:
+	DEBUG=* node --inspect-brk $(HOMEBRIDGE) -D -U $(PWD)/.homebridge
 
 clean:
 	rm -r $(PWD)/.homebridge/accessories

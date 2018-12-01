@@ -1,19 +1,24 @@
-import { Hap } from '../HAP';
-import { Service } from './Service';
-import { HAP, PurifierResponse } from '../types';
+import { HAP } from '../HAP';
 import { Logger } from '../Logger';
+import { PurifierResponse } from '../types';
+import { AbstractService } from './AbstractService';
+import { Service } from '../interfaces/HAP';
 
-export class AirQualityService extends Service {
+export class AirQualityService extends AbstractService {
 
-  register(): HAP.Service {
-    let airQualityService = this.accessory.getService(Hap.Service.AirQualitySensor);
+  register(): void {
+    let airQualityService = this.getOrCreateAirQualityService();
+
+    airQualityService.getCharacteristic(HAP.Characteristic.AirQuality)
+      .on('get', this.getAirQuality.bind(this));
+  }
+
+  getOrCreateAirQualityService(): Service {
+    let airQualityService = this.accessory.getService(HAP.Service.AirQualitySensor);
 
     if (!airQualityService) {
-      airQualityService = this.accessory.addService(Hap.Service.AirQualitySensor, this.purifier.name);
+      airQualityService = this.accessory.addService(HAP.Service.AirQualitySensor, this.purifier.name);
     }
-
-    airQualityService.getCharacteristic(Hap.Characteristic.AirQuality)
-      .on('get', this.getAirQuality.bind(this));
 
     return airQualityService;
   }
@@ -26,16 +31,16 @@ export class AirQualityService extends Service {
 
       switch (status.airQuality) {
         case PurifierResponse.AirQuality.Excellent:
-          result = Hap.Characteristic.AirQuality.EXCELLENT;
+          result = HAP.Characteristic.AirQuality.EXCELLENT;
           break;
         case PurifierResponse.AirQuality.Good:
-          result = Hap.Characteristic.AirQuality.GOOD;
+          result = HAP.Characteristic.AirQuality.GOOD;
           break;
         case PurifierResponse.AirQuality.Fair:
-          result = Hap.Characteristic.AirQuality.FAIR;
+          result = HAP.Characteristic.AirQuality.FAIR;
           break;
         case PurifierResponse.AirQuality.Inferior:
-          result = Hap.Characteristic.AirQuality.INFERIOR;
+          result = HAP.Characteristic.AirQuality.INFERIOR;
           break;
       }
 

@@ -1,23 +1,23 @@
 import { Authenticator } from './Authenticator';
-import { Hap } from './HAP';
+import { HAP } from './HAP';
+import { Accessory, Log, Platform, Service } from './interfaces/HAP';
 import { Logger } from './Logger';
 import { Purifier } from './Purifier';
 import { AirQualityService } from './services/AirQualityService';
 import { FilterService } from './services/FilterService';
 import { LightbulbService } from './services/LightbulbService';
 import { PurifierService } from './services/PurifierService';
-import { HAP } from './types';
 
 export class AirmegaPlatform {
-  platform: HAP.Platform;
-  accessories: Map<string, HAP.Accessory>;
-  log: HAP.Log;
+  platform: Platform;
+  accessories: Map<string, Accessory>;
+  log: Log;
 
-  constructor(log: HAP.Log, config: HAP.AccessoryConfig, platform: HAP.Platform) {
+  constructor(log: Log, config: any, platform: Platform) {
     Logger.setLogger(log, config['debug']);
 
     this.platform = platform;
-    this.accessories = new Map<string, HAP.Accessory>();
+    this.accessories = new Map<string, Accessory>();
 
     if (!this.platform) return;
 
@@ -43,16 +43,16 @@ export class AirmegaPlatform {
     });
   }
 
-  configureAccessory(accessory: HAP.Accessory): void {
+  configureAccessory(accessory: Accessory): void {
     this.accessories.set(accessory.UUID, accessory);
   }
 
-  registerAccessory(purifier: Purifier, config: HAP.AccessoryConfig): void {
-    let uuid: string = Hap.UUIDGen.generate(purifier.name);
+  registerAccessory(purifier: Purifier, config: any): void {
+    let uuid = HAP.UUID.generate(purifier.name);
     let accessory = this.accessories.get(uuid);
 
     if (!accessory) {
-      accessory = new Hap.Accessory(purifier.name, uuid);
+      accessory = new HAP.Accessory(purifier.name, uuid);
       this.accessories.set(accessory.UUID, accessory);
 
       this.platform.registerPlatformAccessories('homebridge-airmega', 'Airmega', [accessory]);
@@ -63,35 +63,37 @@ export class AirmegaPlatform {
     Logger.log(`Found ${purifier.name}`);
   }
 
-  registerServices(purifier: Purifier, accessory: HAP.Accessory, config: HAP.AccessoryConfig): void {
-    accessory.getService(Hap.Service.AccessoryInformation)
-      .setCharacteristic(Hap.Characteristic.Manufacturer, 'Coway')
-      .setCharacteristic(Hap.Characteristic.Model, 'Airmega')
-      .setCharacteristic(Hap.Characteristic.SerialNumber, purifier.id);
+  registerServices(purifier: Purifier, accessory: Accessory, config: any): void {
+    accessory.getService(HAP.Service.AccessoryInformation)
+      .setCharacteristic(HAP.Characteristic.Manufacturer, 'Coway')
+      .setCharacteristic(HAP.Characteristic.Model, 'Airmega')
+      .setCharacteristic(HAP.Characteristic.SerialNumber, purifier.id);
 
     let purifierService = new PurifierService(purifier, accessory);
-    let airQualityService = new AirQualityService(purifier, accessory);
-    let lightService = new LightbulbService(purifier, accessory);
-    let filterService = new FilterService(purifier, accessory);
-
     purifierService.register();
+
+    let airQualityService = new AirQualityService(purifier, accessory);
     airQualityService.register();
+
+    let filterService = new FilterService(purifier, accessory);
     filterService.register();
 
+    let lightService = new LightbulbService(purifier, accessory);
+
     if (this.shouldExcludeAccessory(config, 'lightbulb')) {
-      this.removeService(accessory, Hap.Service.Lightbulb);
+      this.removeService(accessory, HAP.Service.Lightbulb);
     } else {
       lightService.register();
     }
   }
 
-  shouldExcludeAccessory(config: HAP.AccessoryConfig, name: string) {
+  shouldExcludeAccessory(config: any, name: string) {
     if (!config.hasOwnProperty('exclude')) return false;
 
     return config['exclude'].includes(name);
   }
 
-  removeService(accessory: HAP.Accessory, service: HAP.Service): void {
+  removeService(accessory: Accessory, service: Service): void {
     accessory.services.forEach(existingService => {
       if (existingService.UUID == service.UUID) {
         accessory.removeService(existingService);
