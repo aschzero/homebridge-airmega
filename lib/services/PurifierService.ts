@@ -1,8 +1,8 @@
-import { Logger } from '../Logger';
-import { PurifierResponse } from '../types';
-import { AbstractService } from './AbstractService';
 import { HAP } from '../HAP';
 import { Service } from '../interfaces/HAP';
+import { Fan, Mode, Power } from '../interfaces/PurifierStatus';
+import { Logger } from '../Logger';
+import { AbstractService } from './AbstractService';
 
 export class PurifierService extends AbstractService {
   purifierService: Service;
@@ -40,7 +40,7 @@ export class PurifierService extends AbstractService {
     try {
       let status = await this.purifier.waitForStatusUpdate();
 
-      if (status.power == PurifierResponse.Power.On) {
+      if (status.power == Power.On) {
         callback(null, HAP.Characteristic.Active.ACTIVE);
       } else {
         callback(null, HAP.Characteristic.Active.INACTIVE);
@@ -65,10 +65,10 @@ export class PurifierService extends AbstractService {
 
       if (targetState) {
         this.purifierService.setCharacteristic(HAP.Characteristic.CurrentAirPurifierState, HAP.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
-        this.purifier.power = PurifierResponse.Power.On;
+        this.purifier.power = Power.On;
       } else {
         this.purifierService.setCharacteristic(HAP.Characteristic.CurrentAirPurifierState, HAP.Characteristic.CurrentAirPurifierState.INACTIVE);
-        this.purifier.power = PurifierResponse.Power.Off;
+        this.purifier.power = Power.Off;
       }
 
       // Update light accessory to accurately reflect new state after toggling power
@@ -88,13 +88,13 @@ export class PurifierService extends AbstractService {
     try {
       let status = await this.purifier.waitForStatusUpdate();
 
-      if (status.power == PurifierResponse.Power.Off) {
+      if (status.power == Power.Off) {
         callback(null, HAP.Characteristic.CurrentAirPurifierState.INACTIVE);
         return;
       }
 
-      if (status.mode == PurifierResponse.Mode.Sleep ||
-          status.mode == PurifierResponse.Mode.AutoSleep) {
+      if (status.mode == Mode.Sleep ||
+          status.mode == Mode.AutoSleep) {
         callback(null, HAP.Characteristic.CurrentAirPurifierState.IDLE);
         return;
       }
@@ -110,7 +110,7 @@ export class PurifierService extends AbstractService {
     try {
       let status = await this.purifier.waitForStatusUpdate();
 
-      if (status.mode == PurifierResponse.Mode.Auto) {
+      if (status.mode == Mode.Auto) {
         callback(null, HAP.Characteristic.TargetAirPurifierState.AUTO);
       } else {
         callback(null, HAP.Characteristic.TargetAirPurifierState.MANUAL);
@@ -126,9 +126,9 @@ export class PurifierService extends AbstractService {
       await this.client.setMode(this.purifier.id, targetState);
 
       if (targetState) {
-        this.purifier.mode = PurifierResponse.Mode.Auto;
+        this.purifier.mode = Mode.Auto;
       } else {
-        this.purifier.mode = PurifierResponse.Mode.Manual;
+        this.purifier.mode = Mode.Manual;
       }
 
       callback(null);
@@ -156,9 +156,9 @@ export class PurifierService extends AbstractService {
     let targetSpeed;
     let ranges = {};
 
-    ranges[PurifierResponse.Fan.Low] = [0, 40];
-    ranges[PurifierResponse.Fan.Medium] = [40, 70];
-    ranges[PurifierResponse.Fan.High] = [70, 100];
+    ranges[Fan.Low] = [0, 40];
+    ranges[Fan.Medium] = [40, 70];
+    ranges[Fan.High] = [70, 100];
 
     for (var key in ranges) {
       var currentSpeed = ranges[key];

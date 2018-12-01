@@ -2,8 +2,9 @@ import * as request from 'request-promise';
 
 import { Client } from './Client';
 import { Config } from './Config';
+import { OAuthPayload } from './interfaces/Request';
+import { TokenPair } from './interfaces/TokenStore';
 import { Purifier } from './Purifier';
-import { Request, TokenPair } from './types';
 import { AesUtil, CryptoJS } from './util/aes';
 
 export class Authenticator extends Client {
@@ -99,8 +100,8 @@ export class Authenticator extends Client {
 
   // Similar OAuth payloads are used when retrieving the state ID as well
   // as the auth code, the latter of which requires cookies.
-  private buildOauthPayload(cookies?: string): Request.OAuthPayload {
-    let payload: Request.OAuthPayload = {
+  private buildOauthPayload(cookies?: string): OAuthPayload {
+    let payload: OAuthPayload = {
       uri: Config.Auth.OAUTH_URL,
       resolveWithFullResponse: true,
       headers: {

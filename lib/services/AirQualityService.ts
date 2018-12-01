@@ -1,8 +1,8 @@
 import { HAP } from '../HAP';
 import { Logger } from '../Logger';
-import { PurifierResponse } from '../types';
 import { AbstractService } from './AbstractService';
 import { Service } from '../interfaces/HAP';
+import { AirQuality } from '../interfaces/PurifierStatus';
 
 export class AirQualityService extends AbstractService {
 
@@ -30,16 +30,16 @@ export class AirQualityService extends AbstractService {
       let status = await this.purifier.waitForStatusUpdate();
 
       switch (status.airQuality) {
-        case PurifierResponse.AirQuality.Excellent:
+        case AirQuality.Excellent:
           result = HAP.Characteristic.AirQuality.EXCELLENT;
           break;
-        case PurifierResponse.AirQuality.Good:
+        case AirQuality.Good:
           result = HAP.Characteristic.AirQuality.GOOD;
           break;
-        case PurifierResponse.AirQuality.Fair:
+        case AirQuality.Fair:
           result = HAP.Characteristic.AirQuality.FAIR;
           break;
-        case PurifierResponse.AirQuality.Inferior:
+        case AirQuality.Inferior:
           result = HAP.Characteristic.AirQuality.INFERIOR;
           break;
       }

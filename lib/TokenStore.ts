@@ -1,8 +1,8 @@
 import * as store from 'store';
 
 import { Authenticator } from './Authenticator';
+import { TokenPair } from './interfaces/TokenStore';
 import { Logger } from './Logger';
-import { TokenPair } from './types';
 
 export class TokenStore {
   static readonly TOKEN_KEY = 'tokens';

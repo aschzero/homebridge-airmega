@@ -1,7 +1,7 @@
 import { HAP } from '../HAP';
 import { Service } from '../interfaces/HAP';
+import { Light, Power } from '../interfaces/PurifierStatus';
 import { Logger } from '../Logger';
-import { PurifierResponse } from '../types';
 import { AbstractService } from './AbstractService';
 
 export class LightbulbService extends AbstractService {
@@ -27,12 +27,12 @@ export class LightbulbService extends AbstractService {
   async getLightIndicator(callback): Promise<void> {
     let status = await this.purifier.waitForStatusUpdate();
 
-    if (status.power == PurifierResponse.Power.Off) {
+    if (status.power == Power.Off) {
       callback(null, false);
       return;
     }
 
-    callback(null, status.light == PurifierResponse.Light.On);
+    callback(null, status.light == Light.On);
   }
 
   async setLightIndicator(targetState, callback): Promise<void> {

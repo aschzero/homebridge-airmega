@@ -1,13 +1,13 @@
 import { Config } from '../Config';
 import { HAP } from '../HAP';
-import { Logger } from '../Logger';
-import { PurifierResponse } from '../types';
-import { AbstractService } from './AbstractService';
 import { Service } from '../interfaces/HAP';
+import { Filter } from '../interfaces/PurifierStatus';
+import { Logger } from '../Logger';
+import { AbstractService } from './AbstractService';
 
 export class FilterService extends AbstractService {
-  preFilterStatus: PurifierResponse.FilterStatus;
-  mainFilterStatus: PurifierResponse.FilterStatus;
+  preFilterStatus: Filter;
+  mainFilterStatus: Filter;
 
   register(): void {
     this.getOrCreateMainFilterService();

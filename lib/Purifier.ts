@@ -1,20 +1,20 @@
-import { PurifierResponse } from './types';
 import { Client } from './Client';
-import { Deferred } from './util/Deferred';
+import { AirQuality, Fan, Light, Mode, Power, Status } from './interfaces/PurifierStatus';
 import { Logger } from './Logger';
+import { Deferred } from './util/Deferred';
 
 export class Purifier {
   id: string;
   name: string;
-  power: PurifierResponse.Power;
-  light: PurifierResponse.Light;
-  fan: PurifierResponse.Fan;
-  mode: PurifierResponse.Mode;
-  airQuality: PurifierResponse.AirQuality;
+  power: Power;
+  light: Light;
+  fan: Fan;
+  mode: Mode;
+  airQuality: AirQuality;
 
   client: Client;
 
-  deferredStatus: Deferred<PurifierResponse.Status>;
+  deferredStatus: Deferred<Status>;
   statusUpdateLocked: boolean;
 
   constructor(id: string, name: string) {
@@ -22,11 +22,11 @@ export class Purifier {
     this.name = name;
     this.client = new Client();
 
-    this.deferredStatus = new Deferred<PurifierResponse.Status>();
+    this.deferredStatus = new Deferred<Status>();
     this.statusUpdateLocked = false;
   }
 
-  setStatus(status: PurifierResponse.Status): void {
+  setStatus(status: Status): void {
     this.power = status.power;
     this.light = status.light;
     this.fan = status.fan;
@@ -34,7 +34,7 @@ export class Purifier {
     this.airQuality = status.airQuality;
   }
 
-  async waitForStatusUpdate(): Promise<PurifierResponse.Status> {
+  async waitForStatusUpdate(): Promise<Status> {
     if (this.statusUpdateLocked) {
       let status = await this.deferredStatus;
       return status;
@@ -49,7 +49,7 @@ export class Purifier {
       this.deferredStatus.resolve(status);
 
       setTimeout(() => {
-        this.deferredStatus = new Deferred<PurifierResponse.Status>();
+        this.deferredStatus = new Deferred<Status>();
       }, 1000);
 
       this.statusUpdateLocked = false;

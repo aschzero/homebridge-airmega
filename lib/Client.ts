@@ -1,9 +1,10 @@
 import * as request from 'request-promise';
 
 import { Config } from './Config';
+import { Filter, Status } from './interfaces/PurifierStatus';
+import { Message, MessageHeader, Payload } from './interfaces/Request';
 import { Logger } from './Logger';
 import { TokenStore } from './TokenStore';
-import { PurifierResponse, Request } from './types';
 
 export class Client {
   tokenStore: TokenStore;
@@ -12,13 +13,13 @@ export class Client {
     this.tokenStore = new TokenStore();
   }
 
-  async getStatus(id: string): Promise<PurifierResponse.Status> {
-    let payload: Request.Payload = await this.buildStatusPayload(id, Config.Endpoints.STATUS);
+  async getStatus(id: string): Promise<Status> {
+    let payload: Payload = await this.buildStatusPayload(id, Config.Endpoints.STATUS);
 
     let response = await this.sendRequest(payload);
     let statusResponse = response.body.prodStatus[0];
 
-    let status: PurifierResponse.Status = {
+    let status: Status = {
       power: statusResponse.power,
       light: statusResponse.light,
       fan: statusResponse.airVolume,
@@ -29,12 +30,12 @@ export class Client {
     return status;
   }
 
-  async getFilterStatus(id: string): Promise<PurifierResponse.FilterStatus[]> {
-    let payload: Request.Payload = await this.buildStatusPayload(id, Config.Endpoints.FILTERS);
+  async getFilterStatus(id: string): Promise<Filter[]> {
+    let payload: Payload = await this.buildStatusPayload(id, Config.Endpoints.FILTERS);
     let response = await this.sendRequest(payload);
 
     let filterStatuses = response.body.filterList.map(filter => {
-      let filterStatus: PurifierResponse.FilterStatus = {
+      let filterStatus: Filter = {
         name: filter.filterName,
         lifeLevel: filter.filterPer
       }
@@ -75,7 +76,7 @@ export class Client {
     await this.sendControlRequest(id, payload);
   }
 
-  private async sendControlRequest(id: string, payload: Request.Payload): Promise<void> {
+  private async sendControlRequest(id: string, payload: Payload): Promise<void> {
     await this.sendRequest(payload);
     await this.refreshStatus(id);
   }
@@ -89,10 +90,10 @@ export class Client {
     await this.sendRequest(payload);
   }
 
-  private async buildStatusMessage(id: string, endpoint: string): Promise<Request.Message> {
-    let messageHeader: Request.MessageHeader = await this.buildMessageHeader(endpoint);
+  private async buildStatusMessage(id: string, endpoint: string): Promise<Message> {
+    let messageHeader: MessageHeader = await this.buildMessageHeader(endpoint);
 
-    let message: Request.Message = {
+    let message: Message = {
       header: messageHeader,
       body: {
         barcode: id,
@@ -107,18 +108,18 @@ export class Client {
     return message;
   }
 
-  private async buildStatusPayload(id: string, endpoint: string): Promise<Request.Payload> {
+  private async buildStatusPayload(id: string, endpoint: string): Promise<Payload> {
     let message = await this.buildStatusMessage(id, endpoint);
     let payload = this.buildPayload(endpoint, message);
 
     return payload;
   }
 
-  private async buildControlPayload(id:string, code: string, value: string): Promise<Request.Payload> {
+  private async buildControlPayload(id:string, code: string, value: string): Promise<Payload> {
     let endpoint = Config.Endpoints.CONTROL;
-    let messageHeader: Request.MessageHeader = await this.buildMessageHeader(endpoint);
+    let messageHeader: MessageHeader = await this.buildMessageHeader(endpoint);
 
-    let message: Request.Message = {
+    let message: Message = {
       header: messageHeader,
       body: {
         barcode: id,
@@ -134,7 +135,7 @@ export class Client {
     return payload;
   }
 
-  private async sendRequest(payload: Request.Payload) {
+  private async sendRequest(payload: Payload) {
     Logger.debug('Sending payload', payload);
 
     let response = await request.post(payload);
@@ -143,10 +144,10 @@ export class Client {
     return response;
   }
 
-  async buildMessageHeader(endpoint: string): Promise<Request.MessageHeader> {
+  async buildMessageHeader(endpoint: string): Promise<MessageHeader> {
     let tokens = await this.tokenStore.getTokens();
 
-    let header: Request.MessageHeader = {
+    let header: MessageHeader = {
       trcode: endpoint,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken
@@ -155,8 +156,8 @@ export class Client {
     return header;
   }
 
-  buildPayload(endpoint: string, message: Request.Message): Request.Payload {
-    let payload: Request.Payload = {
+  buildPayload(endpoint: string, message: Message): Payload {
+    let payload: Payload = {
       uri: `${Config.BASE_URI}/${endpoint}.json`,
       headers: {
         'User-Agent': Config.USER_AGENT,
