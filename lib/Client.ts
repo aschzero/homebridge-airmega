@@ -17,6 +17,11 @@ export class Client {
     let payload: Payload = await this.buildStatusPayload(id, Config.Endpoints.STATUS);
 
     let response = await this.sendRequest(payload);
+
+    if (!response.body.netStatus) {
+      throw new Error(`API response indicated a WiFi connectivity issue. Ensure the purifier is connected to WiFi and set up in the IOCare app.`);
+    }
+
     let statusResponse = response.body.prodStatus[0];
 
     let status: Status = {
