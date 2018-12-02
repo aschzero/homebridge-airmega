@@ -1,6 +1,5 @@
 import { Client } from './Client';
 import { AirQuality, Fan, Light, Mode, Power, Status } from './interfaces/PurifierStatus';
-import { Logger } from './Logger';
 import { Deferred } from './util/Deferred';
 
 export class Purifier {
@@ -47,16 +46,21 @@ export class Purifier {
 
       this.setStatus(status);
       this.deferredStatus.resolve(status);
-
-      setTimeout(() => {
-        this.deferredStatus = new Deferred<Status>();
-      }, 1000);
-
-      this.statusUpdateLocked = false;
+      this.clearStatusUpdateLock();
 
       return status;
     } catch(e) {
-      Logger.error('Unable to update purifier status', e);
+      this.deferredStatus.reject(e);
+      this.clearStatusUpdateLock();
+
+      throw new Error(e);
     }
+  }
+
+  clearStatusUpdateLock(): void {
+    setTimeout(() => {
+      this.deferredStatus = new Deferred<Status>();
+      this.statusUpdateLocked = false;
+    }, 1000);
   }
 }
