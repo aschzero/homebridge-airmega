@@ -5,7 +5,9 @@
     "module": "commonjs",
     "outDir": "dist",
     "sourceMap": true,
-    "allowJs": true
+    "allowJs": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
   "files": [
     "index.ts"
