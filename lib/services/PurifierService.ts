@@ -46,7 +46,6 @@ export class PurifierService extends AbstractService {
         callback(null, HAP.Characteristic.Active.INACTIVE);
       }
     } catch(e) {
-      Logger.error('Unable to get active state', e);
       callback(e);
     }
   }
@@ -116,7 +115,6 @@ export class PurifierService extends AbstractService {
         callback(null, HAP.Characteristic.TargetAirPurifierState.MANUAL);
       }
     } catch(e) {
-      Logger.error('Unable to get target state', e);
       callback(e);
     }
   }
@@ -147,7 +145,6 @@ export class PurifierService extends AbstractService {
 
       callback(null, fanSpeed);
     } catch(e) {
-      Logger.error('Unable to get fan speed', e);
       callback(e);
     }
   }

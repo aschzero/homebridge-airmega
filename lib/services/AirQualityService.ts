@@ -1,8 +1,7 @@
 import { HAP } from '../HAP';
-import { Logger } from '../Logger';
-import { AbstractService } from './AbstractService';
 import { Service } from '../interfaces/HAP';
 import { AirQuality } from '../interfaces/PurifierStatus';
+import { AbstractService } from './AbstractService';
 
 export class AirQualityService extends AbstractService {
 
@@ -46,7 +45,6 @@ export class AirQualityService extends AbstractService {
 
       callback(null, result);
     } catch(e) {
-      Logger.error('Unable to get air quality', e);
       callback(e);
     }
   }
