@@ -6,6 +6,7 @@ import { OAuthPayload } from './interfaces/Request';
 import { TokenPair } from './interfaces/TokenStore';
 import { Purifier } from './Purifier';
 import { AesUtil, CryptoJS } from './util/aes';
+import { Logger } from './Logger';
 
 export class Authenticator extends Client {
   result: any;
@@ -36,7 +37,10 @@ export class Authenticator extends Client {
     message.header.refreshToken = oldTokens.refreshToken;
 
     let payload = this.buildPayload(Config.Endpoints.DEVICE_LIST, message);
+    Logger.debug('Sending payload', payload);
+
     let response = await request.post(payload);
+    Logger.debug('Sending payload', payload);
 
     let tokens = {
       accessToken: response.header.accessToken,
@@ -91,9 +95,13 @@ export class Authenticator extends Client {
 
   private async getAccountStatus(authCode: string): Promise<any> {
     let message = this.buildAccountPayloadMessage(authCode);
-
     let payload = this.buildPayload(Config.Endpoints.DEVICE_LIST, message);
+
+    Logger.debug('Sending payload', payload);
+
     let response = await request.post(payload);
+
+    Logger.debug('Got response', response);
 
     return response;
   }
