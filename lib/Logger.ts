@@ -20,8 +20,8 @@ class AirmegaLogger {
     this.log(result);
   }
 
-  error(message: string, error: any) {
-    this.log(`[ERROR] ${message}. ${error}`)
+  error(message: string, error: Error) {
+    this.log(`[ERROR] ${message}. ${error.message}`)
   }
 }
 
