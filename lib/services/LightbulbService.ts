@@ -25,14 +25,17 @@ export class LightbulbService extends AbstractService {
   }
 
   async getLightIndicator(callback): Promise<void> {
-    let status = await this.purifier.waitForStatusUpdate();
+    try {
+      let status = await this.purifier.waitForStatusUpdate();
 
-    if (status.power == Power.Off) {
-      callback(null, false);
-      return;
+      if (status.power == Power.Off) {
+        return callback(null, false);
+      }
+
+      callback(null, status.light == Light.On);
+    } catch(e) {
+      callback(e);
     }
-
-    callback(null, status.light == Light.On);
   }
 
   async setLightIndicator(targetState, callback): Promise<void> {
