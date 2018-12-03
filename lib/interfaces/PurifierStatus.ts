@@ -36,7 +36,7 @@ export interface Status {
   airQuality: AirQuality
 }
 
-export interface Filter {
+export interface FilterStatus {
   name: string
   lifeLevel: number
 }

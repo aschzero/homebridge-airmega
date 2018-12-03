@@ -1,5 +1,5 @@
 import { Client } from './Client';
-import { AirQuality, Fan, Light, Mode, Power, Status } from './interfaces/PurifierStatus';
+import { AirQuality, Fan, Light, Mode, Power, Status, FilterStatus } from './interfaces/PurifierStatus';
 import { Deferred } from './util/Deferred';
 
 export class Purifier {
@@ -14,7 +14,10 @@ export class Purifier {
   client: Client;
 
   deferredStatus: Deferred<Status>;
+  deferredFilterStatus: Deferred<FilterStatus[]>;
+
   statusUpdateLocked: boolean;
+  filterStatusUpdateLocked: boolean;
 
   constructor(id: string, name: string) {
     this.id = id;
@@ -22,7 +25,10 @@ export class Purifier {
     this.client = new Client();
 
     this.deferredStatus = new Deferred<Status>();
+    this.deferredFilterStatus = new Deferred<FilterStatus[]>();
+
     this.statusUpdateLocked = false;
+    this.filterStatusUpdateLocked = false;
   }
 
   setStatus(status: Status): void {
@@ -46,21 +52,40 @@ export class Purifier {
 
       this.setStatus(status);
       this.deferredStatus.resolve(status);
-      this.clearStatusUpdateLock();
 
       return status;
     } catch(e) {
       this.deferredStatus.reject(e);
-      this.clearStatusUpdateLock();
-
       throw new Error(e);
+    } finally {
+      setTimeout(() => {
+        this.deferredStatus = new Deferred<Status>();
+        this.statusUpdateLocked = false;
+      }, 1000);
     }
   }
 
-  clearStatusUpdateLock(): void {
-    setTimeout(() => {
-      this.deferredStatus = new Deferred<Status>();
-      this.statusUpdateLocked = false;
-    }, 1000);
+  async waitForFilterStatusUpdate(): Promise<FilterStatus[]> {
+    if (this.statusUpdateLocked) {
+      let status = await this.deferredFilterStatus;
+      return status;
+    }
+
+    this.filterStatusUpdateLocked = true;
+
+    try {
+      let status = await this.client.getFilterStatus(this.id);
+      this.deferredFilterStatus.resolve(status);
+
+      return status;
+    } catch(e) {
+      this.deferredFilterStatus.reject(e);
+      throw new Error(e);
+    } finally {
+      setTimeout(() => {
+        this.deferredFilterStatus = new Deferred<FilterStatus[]>();
+        this.filterStatusUpdateLocked = false;
+      }, 1000);
+    }
   }
 }

@@ -1,7 +1,7 @@
 import * as request from 'request-promise';
 
 import { Config } from './Config';
-import { Filter, Status } from './interfaces/PurifierStatus';
+import { FilterStatus, Status } from './interfaces/PurifierStatus';
 import { Message, MessageHeader, Payload } from './interfaces/Request';
 import { Logger } from './Logger';
 import { TokenStore } from './TokenStore';
@@ -35,20 +35,21 @@ export class Client {
     return status;
   }
 
-  async getFilterStatus(id: string): Promise<Filter[]> {
+  async getFilterStatus(id: string): Promise<FilterStatus[]> {
     let payload: Payload = await this.buildStatusPayload(id, Config.Endpoints.FILTERS);
+    Logger.debug('Sending payload', payload);
+
     let response = await this.sendRequest(payload);
+    Logger.debug('Got response', response);
 
     let filterStatuses = response.body.filterList.map(filter => {
-      let filterStatus: Filter = {
+      let filterStatus: FilterStatus = {
         name: filter.filterName,
         lifeLevel: filter.filterPer
       }
 
       return filterStatus;
     })
-
-    Logger.debug('Filter status', filterStatuses);
 
     return filterStatuses;
   }
