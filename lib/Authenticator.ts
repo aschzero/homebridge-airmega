@@ -2,41 +2,37 @@ import * as request from 'request-promise';
 
 import { Client } from './Client';
 import { Config } from './Config';
-import { OAuthPayload } from './interfaces/Request';
+import { OAuthPayload, Payload } from './interfaces/Request';
 import { TokenPair } from './interfaces/TokenStore';
+import { Logger } from './Logger';
 import { Purifier } from './Purifier';
 import { AesUtil, CryptoJS } from './util/aes';
-import { Logger } from './Logger';
 
 export class Authenticator extends Client {
-  result: any;
 
-  async login(username: string, password: string): Promise<Purifier[]> {
+  async login(username: string, password: string): Promise<TokenPair> {
     let stateId = await this.getStateId();
     let cookies = await this.authenticate(stateId, username, password);
     let authCode = await this.getAuthCode(cookies);
 
-    this.result = await this.getAccountStatus(authCode);
+    let tokens = await this.getTokensFromAuthCode(authCode);
+    this.tokenStore.saveTokens(tokens);
 
-    this.tokenStore.saveTokens({
-      accessToken: this.result.header.accessToken,
-      refreshToken: this.result.header.refreshToken,
-    });
+    return tokens;
+  }
 
-    let purifiers = this.result.body.deviceInfos.map(device => {
-      return new Purifier(device.barcode, device.dvcNick);
-    });
+  async getPurifiers(tokens: TokenPair): Promise<Purifier[]> {
+    let payload = this.buildDeviceListPayload(tokens);
+    Logger.debug('Sending payload', payload);
 
-    return purifiers;
+    let response = await request.post(payload);
+    Logger.debug('Got response', response);
+
+    return response.body.deviceInfos.map(device => new Purifier(device.barcode, device.dvcNick));
   }
 
   async refreshTokens(oldTokens: TokenPair): Promise<TokenPair> {
-    let message = this.buildAccountPayloadMessage();
-
-    message.header.accessToken = oldTokens.accessToken;
-    message.header.refreshToken = oldTokens.refreshToken;
-
-    let payload = this.buildPayload(Config.Endpoints.DEVICE_LIST, message);
+    let payload = this.buildTokenRefreshPayload(oldTokens);
     Logger.debug('Sending payload', payload);
 
     let response = await request.post(payload);
@@ -93,17 +89,19 @@ export class Authenticator extends Client {
     return query.match(/(?<=code\=)(.*?)(?=\&)/)[0];
   }
 
-  private async getAccountStatus(authCode: string): Promise<any> {
-    let message = this.buildAccountPayloadMessage(authCode);
-    let payload = this.buildPayload(Config.Endpoints.DEVICE_LIST, message);
-
+  private async getTokensFromAuthCode(authCode: string): Promise<TokenPair> {
+    let payload = this.buildFinishOauthPayload(authCode);
     Logger.debug('Sending payload', payload);
 
     let response = await request.post(payload);
-
     Logger.debug('Got response', response);
 
-    return response;
+    let tokens = {
+      accessToken: response.header.accessToken,
+      refreshToken: response.header.refreshToken
+    }
+
+    return tokens;
   }
 
   // Similar OAuth payloads are used when retrieving the state ID as well
@@ -129,21 +127,15 @@ export class Authenticator extends Client {
     return payload;
   }
 
-  private buildAccountPayloadMessage(authCode?: string) {
+  private buildFinishOauthPayload(authCode: string): Payload {
     let message = {
       header: {
-        result: false,
-        error_code: "",
-        error_text: "",
-        info_text: "",
-        message_version: "",
-        login_session_id: "",
-        trcode: Config.Endpoints.DEVICE_LIST,
+        trcode: Config.Endpoints.TOKEN_REFRESH,
         accessToken: "",
         refreshToken: ""
       },
       body: {
-        authCode: (authCode ? authCode : ""),
+        authCode: authCode,
         isMobile: "M",
         langCd: "en",
         osType: 1,
@@ -152,6 +144,47 @@ export class Authenticator extends Client {
       }
     }
 
-    return message;
+    let payload = this.buildPayload(Config.Endpoints.TOKEN_REFRESH, message);
+
+    return payload;
+  }
+
+  private buildDeviceListPayload(tokens: TokenPair): Payload {
+    let message = {
+      header: {
+        trcode: Config.Endpoints.DEVICE_LIST,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken
+      },
+      body: {
+        pageIndex: "0",
+        pageSize: "100"
+      }
+    }
+
+    let payload = this.buildPayload(Config.Endpoints.DEVICE_LIST, message);
+
+    return payload;
+  }
+
+  private buildTokenRefreshPayload(tokens: TokenPair): Payload {
+    let message = {
+      header: {
+        trcode: Config.Endpoints.TOKEN_REFRESH,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken
+      },
+      body: {
+        isMobile: "M",
+        langCd: "en",
+        osType: 1,
+        redirectUrl: Config.Auth.REDIRECT_URL,
+        serviceCode: Config.Auth.SERVICE_CODE
+      }
+    }
+
+    let payload = this.buildPayload(Config.Endpoints.TOKEN_REFRESH, message);
+
+    return payload;
   }
 }
