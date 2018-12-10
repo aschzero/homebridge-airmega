@@ -58,12 +58,6 @@ export interface Platform {
   registerPlatformAccessories(...args: any[]): void;
 }
 
-export interface API {
-  uuid: UUID;
-  Service: Service;
-  Characteristic: Characteristic;
-}
-
 export interface UUID {
   generate(string): string;
 }
