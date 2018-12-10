@@ -92,8 +92,7 @@ export class PurifierService extends AbstractService {
         return;
       }
 
-      if (status.mode == Mode.Sleep ||
-          status.mode == Mode.AutoSleep) {
+      if (status.mode == Mode.Sleep || status.mode == Mode.AutoSleep) {
         callback(null, HAP.Characteristic.CurrentAirPurifierState.IDLE);
         return;
       }
@@ -125,8 +124,12 @@ export class PurifierService extends AbstractService {
 
       if (targetState) {
         this.purifier.mode = Mode.Auto;
+        this.purifierService.getCharacteristic(HAP.Characteristic.CurrentAirPurifierState)
+                            .updateValue(HAP.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
       } else {
         this.purifier.mode = Mode.Manual;
+        this.purifierService.getCharacteristic(HAP.Characteristic.CurrentAirPurifierState)
+                            .updateValue(HAP.Characteristic.CurrentAirPurifierState.IDLE);
       }
 
       callback();
@@ -177,6 +180,10 @@ export class PurifierService extends AbstractService {
       await this.client.setFanSpeed(this.purifier.id, targetSpeed);
 
       this.purifier.fan = targetSpeed;
+
+      this.purifierService.getCharacteristic(HAP.Characteristic.CurrentAirPurifierState)
+                          .updateValue(HAP.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
+
       this.purifierService.getCharacteristic(HAP.Characteristic.TargetAirPurifierState)
                           .updateValue(HAP.Characteristic.TargetAirPurifierState.MANUAL);
 
