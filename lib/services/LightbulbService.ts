@@ -42,7 +42,7 @@ export class LightbulbService extends AbstractService {
     try {
       await this.client.setLight(this.purifier.id, targetState);
 
-      callback(null);
+      callback();
     } catch(e) {
       Logger.error('Unable to control light', e);
       callback(e);

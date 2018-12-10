@@ -55,7 +55,7 @@ export class PurifierService extends AbstractService {
     // Prevents extraneous calls especially when changing
     // the fan speed (setRotationSpeed ensures device is on).
     if (Number(this.purifier.power) == targetState) {
-      callback(null);
+      callback();
       return;
     }
 
@@ -76,7 +76,7 @@ export class PurifierService extends AbstractService {
         lightService.getCharacteristic(HAP.Characteristic.On).updateValue(targetState);
       }
 
-      callback(null);
+      callback();
     } catch(e) {
       Logger.error('Unable to toggle power', e);
       callback(e);
@@ -129,7 +129,7 @@ export class PurifierService extends AbstractService {
         this.purifier.mode = Mode.Manual;
       }
 
-      callback(null);
+      callback();
     } catch(e) {
       Logger.error('Unable to set new state', e);
       callback(e);
@@ -172,7 +172,7 @@ export class PurifierService extends AbstractService {
       this.purifierService.getCharacteristic(HAP.Characteristic.TargetAirPurifierState)
                           .updateValue(HAP.Characteristic.TargetAirPurifierState.MANUAL);
 
-      callback(null);
+      callback();
     } catch(e) {
       Logger.error('Unable to set fan speed', e);
       callback(e);
