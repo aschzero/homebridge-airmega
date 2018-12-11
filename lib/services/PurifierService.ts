@@ -1,6 +1,6 @@
 import { HAP } from '../HAP';
 import { Service } from '../interfaces/HAP';
-import { Fan, Mode, Power } from '../interfaces/PurifierStatus';
+import { Mode, Power } from '../interfaces/PurifierStatus';
 import { Logger } from '../Logger';
 import { AbstractService } from './AbstractService';
 
@@ -55,7 +55,7 @@ export class PurifierService extends AbstractService {
     // Prevents extraneous calls especially when changing
     // the fan speed (setRotationSpeed ensures device is on).
     if (Number(this.purifier.power) == targetState) {
-      callback(null);
+      callback();
       return;
     }
 
@@ -76,7 +76,7 @@ export class PurifierService extends AbstractService {
         lightService.getCharacteristic(HAP.Characteristic.On).updateValue(targetState);
       }
 
-      callback(null);
+      callback();
     } catch(e) {
       Logger.error('Unable to toggle power', e);
       callback(e);
@@ -92,8 +92,7 @@ export class PurifierService extends AbstractService {
         return;
       }
 
-      if (status.mode == Mode.Sleep ||
-          status.mode == Mode.AutoSleep) {
+      if (status.mode == Mode.Sleep || status.mode == Mode.AutoSleep) {
         callback(null, HAP.Characteristic.CurrentAirPurifierState.IDLE);
         return;
       }
@@ -125,11 +124,15 @@ export class PurifierService extends AbstractService {
 
       if (targetState) {
         this.purifier.mode = Mode.Auto;
+        this.purifierService.getCharacteristic(HAP.Characteristic.CurrentAirPurifierState)
+                            .updateValue(HAP.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
       } else {
         this.purifier.mode = Mode.Manual;
+        this.purifierService.getCharacteristic(HAP.Characteristic.CurrentAirPurifierState)
+                            .updateValue(HAP.Characteristic.CurrentAirPurifierState.IDLE);
       }
 
-      callback(null);
+      callback();
     } catch(e) {
       Logger.error('Unable to set new state', e);
       callback(e);
@@ -137,13 +140,16 @@ export class PurifierService extends AbstractService {
   }
 
   async getRotationSpeed(callback): Promise<void> {
+    let intervals = {
+      1: 20,
+      2: 50,
+      3: 100
+    };
+
     try {
       let status = await this.purifier.waitForStatusUpdate();
 
-      let intervals = {1: 20, 2: 50, 3: 100};
-      let fanSpeed = intervals[status.fan];
-
-      callback(null, fanSpeed);
+      callback(null, intervals[status.fan]);
     } catch(e) {
       callback(e);
     }
@@ -151,28 +157,37 @@ export class PurifierService extends AbstractService {
 
   async setRotationSpeed(targetState, callback) {
     let targetSpeed;
-    let ranges = {};
+    let ranges = {
+      1: [0, 40],
+      2: [40, 70],
+      3: [70, 100]
+    };
 
-    ranges[Fan.Low] = [0, 40];
-    ranges[Fan.Medium] = [40, 70];
-    ranges[Fan.High] = [70, 100];
+    for (let key in ranges) {
+      let range = ranges[key];
 
-    for (var key in ranges) {
-      var currentSpeed = ranges[key];
-
-      if (targetState > currentSpeed[0] && targetState <= currentSpeed[1]) {
+      if (targetState > range[0] && targetState <= range[1]) {
         targetSpeed = key;
         break;
       }
     }
 
+    if (this.purifier.fan == targetSpeed) {
+      return callback();
+    }
+
     try {
       await this.client.setFanSpeed(this.purifier.id, targetSpeed);
+
+      this.purifier.fan = targetSpeed;
+
+      this.purifierService.getCharacteristic(HAP.Characteristic.CurrentAirPurifierState)
+                          .updateValue(HAP.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
 
       this.purifierService.getCharacteristic(HAP.Characteristic.TargetAirPurifierState)
                           .updateValue(HAP.Characteristic.TargetAirPurifierState.MANUAL);
 
-      callback(null);
+      callback();
     } catch(e) {
       Logger.error('Unable to set fan speed', e);
       callback(e);

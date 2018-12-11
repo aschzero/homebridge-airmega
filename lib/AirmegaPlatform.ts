@@ -34,8 +34,10 @@ export class AirmegaPlatform {
       try {
         let authenticator = new Authenticator();
 
-        authenticator.login(username, password).then(purifiers => {
-          purifiers.forEach(purifier => this.registerAccessory(purifier, config));
+        authenticator.login(username, password).then(tokens => {
+          authenticator.getPurifiers(tokens).then(purifiers => {
+            purifiers.forEach(purifier => this.registerAccessory(purifier, config));
+          });
         });
       } catch(e) {
         Logger.error('Unable to authenticate', e);
