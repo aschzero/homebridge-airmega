@@ -7,14 +7,15 @@ import { AirQualityService } from './services/AirQualityService';
 import { FilterService } from './services/FilterService';
 import { LightbulbService } from './services/LightbulbService';
 import { PurifierService } from './services/PurifierService';
+import { PluginConfig } from './interfaces/PluginConfig';
 
 export class AirmegaPlatform {
   platform: Platform;
   accessories: Map<string, Accessory>;
   log: Log;
 
-  constructor(log: Log, config: any, platform: Platform) {
-    Logger.setLogger(log, config['debug']);
+  constructor(log: Log, config: PluginConfig, platform: Platform) {
+    Logger.setLogger(log, config.debug);
 
     this.platform = platform;
     this.accessories = new Map<string, Accessory>();
@@ -22,10 +23,7 @@ export class AirmegaPlatform {
     if (!this.platform) return;
 
     this.platform.on('didFinishLaunching', () => {
-      let username = config['username'];
-      let password = config['password'];
-
-      if (!username || !password) {
+      if (!config.username || !config.password) {
         throw Error('Username and password fields are required in config');
       }
 
@@ -34,7 +32,7 @@ export class AirmegaPlatform {
       try {
         let authenticator = new Authenticator();
 
-        authenticator.login(username, password).then(tokens => {
+        authenticator.login(config.username, config.password).then(tokens => {
           authenticator.getPurifiers(tokens).then(purifiers => {
             purifiers.forEach(purifier => this.registerAccessory(purifier, config));
           });
@@ -65,7 +63,7 @@ export class AirmegaPlatform {
     Logger.log(`Found ${purifier.name}`);
   }
 
-  registerServices(purifier: Purifier, accessory: Accessory, config: any): void {
+  registerServices(purifier: Purifier, accessory: Accessory, config: PluginConfig): void {
     accessory.getService(HAP.Service.AccessoryInformation)
       .setCharacteristic(HAP.Characteristic.Manufacturer, 'Coway')
       .setCharacteristic(HAP.Characteristic.Model, 'Airmega')
@@ -89,10 +87,10 @@ export class AirmegaPlatform {
     }
   }
 
-  shouldExcludeAccessory(config: any, name: string) {
+  shouldExcludeAccessory(config: PluginConfig, name: string) {
     if (!config.hasOwnProperty('exclude')) return false;
 
-    return config['exclude'].includes(name);
+    return config.exclude.includes(name);
   }
 
   removeService(accessory: Accessory, service: Service): void {

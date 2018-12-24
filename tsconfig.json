@@ -2,6 +2,7 @@
   "compileOnSave": true,
   "compilerOptions": {
     "target": "es6",
+    "lib": ["es2017"],
     "module": "commonjs",
     "outDir": "dist",
     "sourceMap": true,
