@@ -1,6 +1,6 @@
 import { Client } from './Client';
-import { AirQuality, Fan, Light, Mode, Power, Status, FilterStatus } from './interfaces/PurifierStatus';
-import { Deferred } from './util/Deferred';
+import { AirQuality, Fan, FilterStatus, Light, Mode, Power, Status } from './interfaces/PurifierStatus';
+import { StatusUpdater } from './StatusUpdater';
 
 export class Purifier {
   id: string;
@@ -13,22 +13,17 @@ export class Purifier {
 
   client: Client;
 
-  deferredStatus: Deferred<Status>;
-  deferredFilterStatus: Deferred<FilterStatus[]>;
-
-  statusUpdateLocked: boolean;
-  filterStatusUpdateLocked: boolean;
+  purifierStatusUpdater: StatusUpdater<Status>;
+  filterStatusUpdater: StatusUpdater<FilterStatus[]>;
 
   constructor(id: string, name: string) {
     this.id = id;
     this.name = name;
+
     this.client = new Client();
 
-    this.deferredStatus = new Deferred<Status>();
-    this.deferredFilterStatus = new Deferred<FilterStatus[]>();
-
-    this.statusUpdateLocked = false;
-    this.filterStatusUpdateLocked = false;
+    this.purifierStatusUpdater = new StatusUpdater<Status>();
+    this.filterStatusUpdater = new StatusUpdater<FilterStatus[]>();
   }
 
   setStatus(status: Status): void {
@@ -40,52 +35,20 @@ export class Purifier {
   }
 
   async waitForStatusUpdate(): Promise<Status> {
-    if (this.statusUpdateLocked) {
-      let status = await this.deferredStatus;
-      return status;
-    }
+    let status = await this.purifierStatusUpdater.wait(() =>
+      this.client.getStatus(this.id)
+    );
 
-    this.statusUpdateLocked = true;
+    this.setStatus(status);
 
-    try {
-      let status = await this.client.getStatus(this.id);
-
-      this.setStatus(status);
-      this.deferredStatus.resolve(status);
-
-      return status;
-    } catch(e) {
-      this.deferredStatus.reject(e);
-      throw new Error(e);
-    } finally {
-      setTimeout(() => {
-        this.deferredStatus = new Deferred<Status>();
-        this.statusUpdateLocked = false;
-      }, 1000);
-    }
+    return status;
   }
 
   async waitForFilterStatusUpdate(): Promise<FilterStatus[]> {
-    if (this.statusUpdateLocked) {
-      let status = await this.deferredFilterStatus;
-      return status;
-    }
+    let status = await this.filterStatusUpdater.wait(() =>
+      this.client.getFilterStatus(this.id)
+    );
 
-    this.filterStatusUpdateLocked = true;
-
-    try {
-      let status = await this.client.getFilterStatus(this.id);
-      this.deferredFilterStatus.resolve(status);
-
-      return status;
-    } catch(e) {
-      this.deferredFilterStatus.reject(e);
-      throw new Error(e);
-    } finally {
-      setTimeout(() => {
-        this.deferredFilterStatus = new Deferred<FilterStatus[]>();
-        this.filterStatusUpdateLocked = false;
-      }, 1000);
-    }
+    return status;
   }
 }
