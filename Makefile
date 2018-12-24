@@ -12,7 +12,7 @@ run:
 	$(HOMEBRIDGE) -D -U $(PWD)/.homebridge -P $(PWD)
 
 inspect:
-	node --inspect-brk $(HOMEBRIDGE) -D -U $(PWD)/.homebridge
+	node --inspect-brk $(HOMEBRIDGE) -D -U $(PWD)/.homebridge -P $(PWD)
 
 clean:
 	rm -r $(PWD)/.homebridge/accessories
