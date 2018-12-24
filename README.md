@@ -1,6 +1,6 @@
 # homebridge-airmega
 
-Control and monitor your Airmega purifier with HomeKit integration.
+Control and monitor your Airmega purifier with HomeKit.
 
 [![npm version](http://img.shields.io/npm/v/homebridge-airmega.svg)](https://npmjs.org/package/homebridge-airmega)
 
@@ -9,7 +9,7 @@ Control and monitor your Airmega purifier with HomeKit integration.
 * Control power, fan speed, and lights
 * Toggle between manual and auto mode
 * Reports the current air quality
-* Reports remaining life level of both filters
+* Reports the life levels and change indication for the pre-filter and Max2 filter.
 
 ## Prerequisites
 
@@ -39,7 +39,7 @@ Add the following to your homebridge config:
 
 ### Excluding Accessories
 
-You can optionally prevent some accessories from being created by using the `exclude` option in your config (note: only the lightbulb accessory supports exclusion for now).
+You can optionally prevent certain accessories from being created by using the `exclude` option in your config (note: only the lightbulb accessory supports exclusion for now).
 
 Example:
 
@@ -64,10 +64,8 @@ The IOCare app offers two main options for logging in: "Phone Number/Email" or "
 
 Example of some Siri commands you can use:
 
-* "Turn the air purifier on"
-* "Turn the air purifier off"
+* "Turn on the air purifier"
+* "Turn off the air purifier lights"
 * "Set the air purifier to auto"
-* "Set the air purifier to manual"
-* "Set the air purifier fan to 50%"
+* "Set the air purifier fan to medium"
 * "What's the air quality in \<room name\>?"
-
