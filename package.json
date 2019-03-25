@@ -7,7 +7,7 @@
 	"license": "MIT",
 	"dependencies": {
 		"request": "^2.88",
-		"request-promise": "^4.2.2",
+		"request-promise": "^4.2.4",
 		"store": "^2.0.12"
 	},
 	"devDependencies": {
