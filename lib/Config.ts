@@ -20,7 +20,7 @@ export namespace Config {
   export namespace Endpoints {
     export const DEVICE_LIST = 'CWIG0304';
     export const TOKEN_REFRESH = 'CWIL0100';
-    export const STATUS = 'CWIA0100';
+    export const STATUS = 'CWIA0120';
     export const CONTROL = 'CWIG0603';
     export const FILTERS = 'CWIA0800';
   }
