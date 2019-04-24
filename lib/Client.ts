@@ -83,11 +83,22 @@ export class Client {
     await this.refreshStatus(id);
   }
 
+  // The API requires this endpoint to be called whenever a control request
+  // is sent, otherwise they are ignored.
   private async refreshStatus(id: string): Promise<void> {
-    let message = await this.buildStatusMessage(id, Config.Endpoints.CONTROL);
-    message.body.refreshFlag = true;
+    let messageHeader: MessageHeader = await this.buildMessageHeader(Config.Endpoints.DEVICE_REFRESH);
 
-    let payload = this.buildPayload(Config.Endpoints.CONTROL, message);
+    let message: Message = {
+      header: messageHeader,
+      body: {
+        barcode: id,
+        dvcBrandCd: 'MG',
+        prodName: 'AIRMEGA',
+        dvcTypeCd: '004'
+      }
+    }
+
+    let payload = this.buildPayload(Config.Endpoints.DEVICE_REFRESH, message);
 
     await this.sendRequest(payload);
   }
@@ -125,6 +136,9 @@ export class Client {
       header: messageHeader,
       body: {
         barcode: id,
+        dvcBrandCd: 'MG',
+        dvcTypeCd: '004',
+        prodName: 'AIRMEGA',
         funcList: [{
           comdVal: value,
           funcId: code

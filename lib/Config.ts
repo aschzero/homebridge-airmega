@@ -19,6 +19,7 @@ export namespace Config {
 
   export namespace Endpoints {
     export const DEVICE_LIST = 'CWIG0304';
+    export const DEVICE_REFRESH = 'CWIG0602';
     export const TOKEN_REFRESH = 'CWIL0100';
     export const STATUS = 'CWIA0120';
     export const CONTROL = 'CWIG0603';
